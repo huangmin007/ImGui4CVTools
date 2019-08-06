@@ -23,8 +23,12 @@ public:
 	Mat GetMat(const char *title);
 
 	//获取指定的视图对象
-	MatViewer* GetViewer(int index);
-	MatViewer* GetViewer(const char *title);
+	//MatViewer* GetViewer(int index);
+	//MatViewer* GetViewer(const char *title);
+
+	//跟据索引，获取指定的视图对象
+	//如果指定的视图对象不存在，则以 title 命名一个新的视图对象，并返回
+	MatViewer* GetViewer(int index, const char *title = NULL);
 
 	bool HasViewer(const char *title);
 

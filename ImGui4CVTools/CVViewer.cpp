@@ -112,12 +112,12 @@ void CVViewer::Render()
 }
 
 //添加日志信息
-static void AddLogger(LogType type, const char *log, ...)
+static void AddLogger(LogType type, const char *msg, ...)
 {
 	char buf[1024];
 	va_list args;
-	va_start(args, log);
-	vsnprintf(buf, IM_ARRAYSIZE(buf), log, args);
+	va_start(args, msg);
+	vsnprintf(buf, IM_ARRAYSIZE(buf), msg, args);
 	buf[IM_ARRAYSIZE(buf) - 1] = 0;
 	va_end(args);
 
@@ -127,10 +127,10 @@ static void AddLogger(LogType type, const char *log, ...)
 	static const char *s_type[3] = { "info", "warn", "error" };
 	logger.AddLog("[%02d:%02d:%02d.%03d][%s]  %s", sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds, s_type[type], buf);
 }
-
-static void AddCVException(const char *msg, Exception e)
+//添加异常信息
+static void AddLogger(Exception ex, const char *msg)
 {
-	AddLogger(LogType::Error, "%s: \n\t\t\t\t%s\n", msg, e.what());
+	AddLogger(LogType::Error, "%s: \n\t\t\t\t%s\n", msg, ex.what());
 	//AddLogger(LogType::Error, "%s: code:%d func:%s msg:%s, line:%d\n \t\t\t\n%s\n", msg, e.code, e.func, e.msg, e.line, e.what());
 }
 
@@ -215,26 +215,29 @@ static void ShowLoggerWindow(bool* p_open)
 }
 
 //添加 Viewer List Guide Combo 
-static void AddViewerCombo(const char* label, int *out_index, bool input = true)
+static void AddViewerCombo(const char* label, int *out_index, bool input = true, ...)
 {
-	const int item_count = MatViewerManager::Instance().GetCount();
+	const int items_count = MatViewerManager::Instance().GetCount();
 	const char **items = MatViewerManager::Instance().GetAllTitle();
-	const char **n_itmes = MatViewerManager::Instance().GetAllTitle("Create New Viewer");
+	const char **n_itmes = MatViewerManager::Instance().GetAllTitle("Create New Viewer OR Use Default Value");
 
 	ImGui::Text(label);
 	ImGui::SameLine(COL_LEFT_WIDTH);
 
+	static char c_label[255] = {};
+	sprintf_s(c_label, "%s%s", "##", label);
+	
 	if (input)
 	{
-		AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
+		AddHelpMarker(u8"选择输入视图窗口的 InputArray 对象");
 		ImGui::SameLine();
-		ImGui::Combo("##src", out_index, items, item_count);
+		ImGui::Combo(c_label, out_index, items, items_count);
 	}
 	else
 	{
-		AddHelpMarker(u8"选择视图窗口的 InputArray 对象\n不选择或选择 Create New Viewer 表示创建新的 InputArray 对象");
+		AddHelpMarker(u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer ...] 或不选择，表示创建新的 InputArray 对象或是参数为空或是默认值");
 		ImGui::SameLine();
-		ImGui::Combo("##dst", out_index, n_itmes, item_count + 1);
+		ImGui::Combo(c_label, out_index, n_itmes, items_count + 1);
 	}
 }
 
@@ -249,10 +252,8 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 	//OpenCV API Tools Demo Start
 	if (ImGui::Begin("OpenCV API Tools Demo", NULL, flags))
 	{
-		static Mat result;
-		const int item_count = MatViewerManager::Instance().GetCount();
-		const char **items = MatViewerManager::Instance().GetAllTitle();
-		const char **n_items = MatViewerManager::Instance().GetAllTitle("Create New Viewer");
+		static Mat output_result;
+		const int items_count = MatViewerManager::Instance().GetCount();
 
 		//API imread
 		if (ImGui::Button("imread", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)))
@@ -262,7 +263,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			{
 				//current time			
 				char c_time[32];
-				GetCurretnTime(c_time, 32, "[%X]");
+				GetCurrentForamtTime(c_time, 32, "[%X]");
 
 				//file name
 				//const char *fn = strrchr(m_fileName, '\\') + 1;
@@ -276,14 +277,14 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static int flags = ImreadModes::IMREAD_COLOR;
 				try
 				{
-					result = imread(m_fileName, flags);
+					output_result = imread(m_fileName, flags);
 				}
 				catch (Exception e)
 				{
-					AddCVException("imread() error", e);
+					AddLogger(e, "imread() error");
 				}
 
-				MatViewerManager::Instance().AddViewer(new MatViewer(title, result));
+				MatViewerManager::Instance().AddViewer(new MatViewer(title, output_result));
 				AddLogger(LogType::Info, "imread() create viewer: %s\n", title);
 			}
 		}
@@ -297,23 +298,12 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static EnumParser<ColorConversionCodes> CVAPI_ColorConversionCodes;
 
 				//input
-				//ImGui::Text("input");
-				//ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				//ImGui::SameLine();
 				static int arg_input_index = -1;
-				//ImGui::Combo("##src", &arg_input_index, items, item_count);
-				AddViewerCombo("input", &arg_input_index);
+				AddViewerCombo("input", &arg_input_index, true);
 
 				//output
-				//ImGui::Text("output");
-				//ImGui::SameLine(COL_LEFT_WIDTH);  
-				//AddHelpMarker(u8"选择视图窗口的 InputArray 对象\n不选择或选择 Create New Viewer 表示创建新的 InputArray 对象");
-				//ImGui::SameLine();
 				static int arg_output_index = -1;
-				//ImGui::Combo("##dst", &arg_output_index, n_items, item_count + 1);
-
 				AddViewerCombo("output", &arg_output_index, false);
-
 
 				//code
 				ImGui::Text("code");
@@ -330,44 +320,54 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static int arg_dstCn_index = 0;
 				ImGui::SliderInt("##dstCn", &arg_dstCn_index, 0, 4);
 
-				/*
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
-				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果");
-				*/
-
 				//执行 cvtColor()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
 				{
 					MatViewer *viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, viewer->GetNextTitle("cvtColor"));
+
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == item_count)
+						cvtColor(viewer->GetMat(), output_viewer->GetMat(), CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
+						output_viewer->is_open = true;
+						output_viewer->UpdateMat();
+						output_viewer->SetViewerPos(viewer->GetNextViewerPos());
+					}
+					catch (Exception e)
+					{
+						AddLogger(LogType::Info, "cvColor() %s\n", viewer->GetTitle());
+					}
+
+					try
+					{
+
+
+						if (arg_output_index == -1 || arg_output_index == items_count)
 						{
-							cvtColor(viewer->GetMat(), result, CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
+							cvtColor(viewer->GetMat(), output_result, CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
 
 							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer->GetNextTitle("cvtColor"));
 							n_viewer->SetViewerPos(viewer->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 
 							AddLogger(LogType::Info, "cvColor() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							Mat image = viewer->GetMat();
-							cvtColor(image, image, CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							cvtColor(viewer->GetMat(), output_viewer->GetMat(), CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
 							viewer->is_open = true;
-							viewer->LoadMat(image);
+							viewer->UpdateMat();
 							AddLogger(LogType::Info, "cvColor() %s\n", viewer->GetTitle());
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("cvtColor() error", e);
+						AddLogger(e, "cvtColor() error");
 					}
+					viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -376,16 +376,12 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			if (ImGui::TreeNode(u8"图像翻转 flip()"))
 			{
 				//input
-				//ImGui::Text("src");
-				//ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				//ImGui::SameLine();
 				static int arg_input_index = -1;
-				//ImGui::Combo("##src", &arg_input_index, items, item_count);
 				AddViewerCombo("input", &arg_input_index);
 
+				//output
 				static int arg_output_index = -1;
 				AddViewerCombo("output", &arg_output_index, false);
-
 
 				//flipCode
 				ImGui::Text("flipCode");
@@ -394,43 +390,37 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static int arg_flipCode_index = 0;
 				ImGui::SliderInt("##dstCn", &arg_flipCode_index, -1, 1);
 
-
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
-				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果");
-
 				//执行 flip()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
 				{
-					printf("len:%d len:%d\n", sizeof(*items));
 					MatViewer *viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == item_count)
+						if (arg_output_index == -1 || arg_output_index == items_count)
 						{
-							flip(viewer->GetMat(), result, arg_flipCode_index);
+							flip(viewer->GetMat(), output_result, arg_flipCode_index);
 
 							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer->GetNextTitle("flip"));
 							n_viewer->SetViewerPos(viewer->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 							AddLogger(LogType::Info, "flip() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							Mat image = viewer->GetMat();
-							flip(image, image, arg_flipCode_index);
-							viewer->is_open = true;
-							viewer->LoadMat(image);
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							flip(viewer->GetMat(), output_viewer->GetMat(), arg_flipCode_index);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
 							AddLogger(LogType::Info, "flip() %s\n", viewer->GetTitle());
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("flip() error", e);
+						AddLogger(e, "flip() error");
 					}
+					viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -445,56 +435,68 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			if (ImGui::TreeNode(u8"add()"))
 			{
 				//input1
-				ImGui::Text("src1");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input1_index = -1;
-				ImGui::Combo("##src1", &arg_input1_index, items, item_count);
+				AddViewerCombo("input1", &arg_input1_index, true);
 
 				//input2
-				ImGui::Text("src2");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input2_index = -1;
-				ImGui::Combo("##src2", &arg_input2_index, items, item_count);
+				AddViewerCombo("input2", &arg_input2_index, true);
 
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//mask
+				static int arg_mask_index = -1;
+				AddViewerCombo("mask", &arg_output_index, false);
+
+				//dtype
+				ImGui::Text("dtype");
+				ImGui::SameLine(COL_LEFT_WIDTH);
+				AddHelpMarker(u8"输出可选数组深度，默认为 -1");
 				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果\n如果不在新视图中显示，将会在第二个输入视图中显示结果");
+				static int dtype = -1;
+				ImGui::SliderInt("##dtype", &dtype, -1, 4);
 
 				//执行 add()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
-					(arg_input1_index != -1 || arg_input2_index == -1))
+					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
 					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
 					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
 
 					try
 					{
-						if (n_viewer)
+						if (arg_output_index ==  -1 || arg_output_index == items_count)
 						{
-							add(viewer1->GetMat(), viewer2->GetMat(), result);
+							add(viewer1->GetMat(), viewer2->GetMat(), output_result, mask, dtype);
 
 							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("add"));
 							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 							AddLogger(LogType::Info, "add() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							add(viewer1->GetMat(), viewer2->GetMat(), viewer2->GetMat());
-							viewer2->is_open = true;
-							viewer2->UpdateMat();
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							add(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask, dtype);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
 							AddLogger(LogType::Info, "add() %s (+) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+
+							output_viewer = NULL;
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("add() error", e);
+						AddLogger(e, "add() error");
 					}
+
+					viewer1 = NULL;
+					viewer2 = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -503,56 +505,68 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			if (ImGui::TreeNode(u8"subtract()"))
 			{
 				//input1
-				ImGui::Text("src1");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input1_index = -1;
-				ImGui::Combo("##src1", &arg_input1_index, items, item_count);
+				AddViewerCombo("input1", &arg_input1_index, true);
 
 				//input2
-				ImGui::Text("src2");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input2_index = -1;
-				ImGui::Combo("##src2", &arg_input2_index, items, item_count);
+				AddViewerCombo("input2", &arg_input2_index, true);
 
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//mask
+				static int arg_mask_index = -1;
+				AddViewerCombo("mask", &arg_output_index, false);
+
+				//dtype
+				ImGui::Text("dtype");
+				ImGui::SameLine(COL_LEFT_WIDTH);
+				AddHelpMarker(u8"输出可选数组深度，默认为 -1");
 				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果\n如果不在新视图中显示，将会在第二个输入视图中显示结果");
+				static int dtype = -1;
+				ImGui::SliderInt("##dtype", &dtype, -1, 4);
 
 				//执行 subtract()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
-					(arg_input1_index != -1 || arg_input2_index == -1))
+					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
 					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
 					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
 
 					try
 					{
-						if (n_viewer)
+						if (arg_output_index == -1 || arg_output_index == items_count)
 						{
-							subtract(viewer1->GetMat(), viewer2->GetMat(), result);
+							subtract(viewer1->GetMat(), viewer2->GetMat(), output_result, mask, dtype);
 
 							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("subtract"));
 							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 							AddLogger(LogType::Info, "subtract() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							subtract(viewer1->GetMat(), viewer2->GetMat(), viewer2->GetMat());
-							viewer2->is_open = true;
-							viewer2->UpdateMat();
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							subtract(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask, dtype);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
 							AddLogger(LogType::Info, "subtract() %s (-) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+
+							output_viewer = NULL;
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("subtract() error", e);
+						AddLogger(e, "subtract() error");
 					}
+
+					viewer1 = NULL;
+					viewer2 = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -561,18 +575,16 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			if (ImGui::TreeNode(u8"multiply()"))
 			{
 				//input1
-				ImGui::Text("src1");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input1_index = -1;
-				ImGui::Combo("##src1", &arg_input1_index, items, item_count);
+				AddViewerCombo("input1", &arg_input1_index, true);
 
 				//input2
-				ImGui::Text("src2");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input2_index = -1;
-				ImGui::Combo("##src2", &arg_input2_index, items, item_count);
+				AddViewerCombo("input2", &arg_input2_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
 
 				//scale
 				ImGui::Text("scale");
@@ -591,43 +603,44 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static int dtype = -1;
 				ImGui::SliderInt("##dtype", &dtype, -1, 4);
 
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
-				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果\n如果不在新视图中显示，将会在第二个输入视图中显示结果");
-
 				//执行 multiply()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
-					(arg_input1_index != -1 || arg_input2_index == -1))
+					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
 					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
 					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
 
 					try
 					{
-						if (n_viewer)
+						if (arg_output_index == -1 || arg_output_index == items_count)
 						{
-							multiply(viewer1->GetMat(), viewer2->GetMat(), result, scale, dtype);
+							multiply(viewer1->GetMat(), viewer2->GetMat(), output_result, scale, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("add"));
+							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("multiply"));
 							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 							AddLogger(LogType::Info, "multiply() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							multiply(viewer1->GetMat(), viewer2->GetMat(), viewer2->GetMat(), scale, dtype);
-							viewer2->is_open = true;
-							viewer2->UpdateMat();
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							multiply(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), scale, dtype);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
 							AddLogger(LogType::Info, "multiply() %s (*) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+
+							output_viewer = NULL;
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("multiply() error", e);
+						AddLogger(e, "multiply() error");
 					}
+
+					viewer1 = NULL;
+					viewer2 = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -636,18 +649,16 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			if (ImGui::TreeNode(u8"divide()"))
 			{
 				//input1
-				ImGui::Text("src1");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input1_index = -1;
-				ImGui::Combo("##src1", &arg_input1_index, items, item_count);
+				AddViewerCombo("input1", &arg_input1_index, true);
 
 				//input2
-				ImGui::Text("src2");
-				ImGui::SameLine(COL_LEFT_WIDTH);  AddHelpMarker(u8"选择视图窗口的 InputArray 对象");
-				ImGui::SameLine();
 				static int arg_input2_index = -1;
-				ImGui::Combo("##src2", &arg_input2_index, items, item_count);
+				AddViewerCombo("input2", &arg_input2_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
 
 				//scale
 				ImGui::Text("scale");
@@ -658,7 +669,6 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				ImGui::SliderFloat("##scale", &scale, 0.1, 3.0, "%.1f");
 
 				//dtype
-				//输出数组的可选深度
 				ImGui::Text("dtype");
 				ImGui::SameLine(COL_LEFT_WIDTH);
 				AddHelpMarker(u8"输出可选数组深度，默认为 -1");
@@ -666,43 +676,44 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				static int dtype = -1;
 				ImGui::SliderInt("##dtype", &dtype, -1, 4);
 
-				//是否创建新视图对象
-				static bool n_viewer = false;
-				ImGui::Checkbox("Create New Viewer", &n_viewer);
-				ImGui::SameLine();
-				AddHelpMarker(u8"是否在新的视图中显示输出结果\n如果不在新视图中显示，将会在第二个输入视图中显示结果");
-
 				//执行 divide()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
-					(arg_input1_index != -1 || arg_input2_index == -1))
+					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
 					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
 					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
 
 					try
 					{
-						if (n_viewer)
+						if (arg_output_index == -1 || arg_output_index == items_count)
 						{
-							divide(viewer1->GetMat(), viewer2->GetMat(), result, scale, dtype);
+							divide(viewer1->GetMat(), viewer2->GetMat(), output_result, scale, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("add"));
+							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("multiply"));
 							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
 							n_viewer->is_open = true;
-							n_viewer->LoadMat(result);
+							n_viewer->LoadMat(output_result);
 							AddLogger(LogType::Info, "divide() create viewer: %s\n", n_viewer->GetTitle());
 						}
 						else
 						{
-							divide(viewer1->GetMat(), viewer2->GetMat(), viewer2->GetMat(), scale, dtype);
-							viewer2->is_open = true;
-							viewer2->UpdateMat();
-							AddLogger(LogType::Info, "divide() %s (*) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							divide(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), scale, dtype);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
+							AddLogger(LogType::Info, "divide() %s (/) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+
+							output_viewer = NULL;
 						}
 					}
 					catch (Exception e)
 					{
-						AddCVException("divide() error", e);
+						AddLogger(e, "divide() error");
 					}
+
+					viewer1 = NULL;
+					viewer2 = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -710,6 +721,67 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			//add, subtract, divide, scaleAdd, addWeighted, accumulate, accumulateProduct, accumulateSquare,
 
 			//bitwise_and()
+			if (ImGui::TreeNode(u8"bitwise_and()"))
+			{
+				//input1
+				static int arg_input1_index = -1;
+				AddViewerCombo("input1", &arg_input1_index, true);
+
+				//input2
+				static int arg_input2_index = -1;
+				AddViewerCombo("input2", &arg_input2_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//mask
+				static int arg_mask_index = -1;
+				AddViewerCombo("mask", &arg_mask_index, false);
+
+				//执行 divide()
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
+					(arg_input1_index != -1 && arg_input2_index != -1))
+				{
+					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
+
+					try
+					{
+						if (arg_output_index == -1 || arg_output_index == items_count)
+						{
+							bitwise_and(viewer1->GetMat(), viewer2->GetMat(), output_result, mask);
+
+							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("bitwise_and"));
+							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
+							n_viewer->is_open = true;
+							n_viewer->LoadMat(output_result);
+							AddLogger(LogType::Info, "bitwise_and() create viewer: %s\n", n_viewer->GetTitle());
+						}
+						else
+						{
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+
+							bitwise_and(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask);
+							output_viewer->is_open = true;
+							output_viewer->UpdateMat();
+							AddLogger(LogType::Info, "bitwise_and() %s (&) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+
+							output_viewer = NULL;
+						}
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "bitwise_and() error");
+					}
+
+					mask.~_InputArray();
+					viewer1 = NULL;
+					viewer2 = NULL;
+				}
+				ImGui::TreePop();
+			}
 
 			//bitwise_or()
 
@@ -718,7 +790,11 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			//bitwise_not()
 		}
 
-		result.release();
+
+		//release output
+		output_result.release();
 	}
+
+	//end
 	ImGui::End();
 }

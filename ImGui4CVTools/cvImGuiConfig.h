@@ -172,8 +172,8 @@ enum LogType
 
 
 static ExampleAppLog logger;
-static void AddCVException(Exception e);
-static void AddLogger(LogType type, const char *log, ...);
+static void AddLogger(Exception ex, const char *msg);
+static void AddLogger(LogType type, const char *msg, ...);
 static void AddHelpMarker(const char* desc);
 
 static void ShowLoggerWindow(bool* p_open);

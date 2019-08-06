@@ -3,11 +3,12 @@
 
 #include "cvImGuiConfig.h"
 #include "MatViewerManager.h"
+#include "CVAPIUtils.h"
 
 MatViewer::MatViewer()
 {
-	time_t now = time(0);
-	ctime_s(n_title, 255, &now);
+	char c_time[32];
+	GetCurrentForamtTime(n_title, 32, "[%X]");
 }
 
 MatViewer::MatViewer(const char *title)

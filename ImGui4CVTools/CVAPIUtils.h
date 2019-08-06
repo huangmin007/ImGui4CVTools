@@ -148,7 +148,7 @@ static bool SelectImageFile(GLFWwindow *window, char *filename)
 //@param buffer 返回 time 字符
 //@param bsize buffer大小
 //@param format 返回 time 字符格式
-static void GetCurretnTime(char *buffer, size_t bsize, const char* format)
+static void GetCurrentForamtTime(char *buffer, size_t bsize, const char* format)
 {
 	struct tm n_tm;
 	time_t n_now = time(0);

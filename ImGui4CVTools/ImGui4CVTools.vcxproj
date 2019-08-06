@@ -74,8 +74,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\libs\opencv-4.1.0\build\include;..\libs\gl3w\include;..\libs\imgui\include;..\libs\glfw\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\libs\opencv-4.1.0\build\x64\vc14\lib;..\libs\glfw\lib-vc2015;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\opencv-4.1.0\build\include;..\libs\gl3w\include;..\libs\imgui\include;..\libs\glfw\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\opencv-4.1.0\build\x64\vc14\lib;..\libs\glfw\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

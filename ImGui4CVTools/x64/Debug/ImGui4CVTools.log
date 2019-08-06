@@ -1,12 +1,7 @@
 ﻿  CVViewer.cpp
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(9): warning C4067: 预处理器指令后有意外标记 - 应输入换行符
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(322): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(581): warning C4305: “参数”: 从“double”到“float”截断
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(656): warning C4305: “参数”: 从“double”到“float”截断
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(405): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“std::size_t”
-  e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(405): note: 请考虑在格式字符串中使用“%zd”
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(405): warning C4473: “printf”: 没有为格式字符串传递足够的参数
-  e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(405): note: 占位符和其参数预计 2 可变参数，但提供的却是 1 参数
-  e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(405): note: 缺失的可变参数 2 为格式字符串“%d”所需
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(314): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(535): warning C4305: “参数”: 从“double”到“float”截断
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(604): warning C4305: “参数”: 从“double”到“float”截断
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.exe
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.pdb (Full PDB)

@@ -66,7 +66,7 @@ Mat MatViewerManager::GetMat(const char* title)
 }
 
 
-
+/*
 MatViewer* MatViewerManager::GetViewer(int index)
 {
 	return viewers[index];
@@ -84,11 +84,27 @@ MatViewer* MatViewerManager::GetViewer(const char *title)
 		}
 	}
 
-	printf("create...\n");
+	printf("create new viewer ...\n");
 	MatViewer *viewer = new MatViewer(title);
 	viewers.push_back(viewer);
 
 	return viewer;
+}
+*/
+
+MatViewer* MatViewerManager::GetViewer(int index, const char *title = NULL)
+{
+	if (index < 0 || index >= viewers.size())
+	{
+		printf("create new viewer ...\n");
+
+		MatViewer *viewer = title != NULL ? new MatViewer(title) : new MatViewer();
+		viewers.push_back(viewer);
+
+		return viewer;
+	}
+
+	return viewers[index];
 }
 
 
