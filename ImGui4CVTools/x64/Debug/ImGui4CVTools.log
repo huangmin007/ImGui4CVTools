@@ -1,7 +1,5 @@
 ﻿  CVViewer.cpp
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(9): warning C4067: 预处理器指令后有意外标记 - 应输入换行符
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(314): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(535): warning C4305: “参数”: 从“double”到“float”截断
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(604): warning C4305: “参数”: 从“double”到“float”截断
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(316): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.exe
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.pdb (Full PDB)

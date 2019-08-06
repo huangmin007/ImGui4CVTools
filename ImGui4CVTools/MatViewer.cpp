@@ -26,7 +26,11 @@ MatViewer::MatViewer(const char *title, Mat image):MatViewer(title)
 MatViewer::~MatViewer()
 {
 	texture_id = -1;
-	if (!n_image.empty()) n_image = NULL;
+	if (!n_image.empty())
+	{
+		n_image.release();
+		n_image = NULL;
+	}
 }
 
 void MatViewer::Render()

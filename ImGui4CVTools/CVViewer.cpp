@@ -219,7 +219,7 @@ static void AddViewerCombo(const char* label, int *out_index, bool input = true,
 {
 	const int items_count = MatViewerManager::Instance().GetCount();
 	const char **items = MatViewerManager::Instance().GetAllTitle();
-	const char **n_itmes = MatViewerManager::Instance().GetAllTitle("Create New Viewer OR Use Default Value");
+	const char **n_itmes = MatViewerManager::Instance().GetAllTitle("Create New Viewer");
 
 	ImGui::Text(label);
 	ImGui::SameLine(COL_LEFT_WIDTH);
@@ -235,7 +235,7 @@ static void AddViewerCombo(const char* label, int *out_index, bool input = true,
 	}
 	else
 	{
-		AddHelpMarker(u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer ...] 或不选择，表示创建新的 InputArray 对象或是参数为空或是默认值");
+		AddHelpMarker(u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空");
 		ImGui::SameLine();
 		ImGui::Combo(c_label, out_index, n_itmes, items_count + 1);
 	}
@@ -252,7 +252,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 	//OpenCV API Tools Demo Start
 	if (ImGui::Begin("OpenCV API Tools Demo", NULL, flags))
 	{
-		static Mat output_result;
+		//static Mat output_result;
 		const int items_count = MatViewerManager::Instance().GetCount();
 
 		//API imread
@@ -274,23 +274,25 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				sprintf_s(title, MAX_CHAR, "%s || %s", c_time, "imread");
 				AddLogger(LogType::Info, "select file: %s\n", m_fileName);
 
+				Mat source;
 				static int flags = ImreadModes::IMREAD_COLOR;
 				try
 				{
-					output_result = imread(m_fileName, flags);
+					source = imread(m_fileName, flags);
+					MatViewerManager::Instance().AddViewer(new MatViewer(title, source));
+					AddLogger(LogType::Info, "imread() create viewer: %s\n", title);
 				}
 				catch (Exception e)
 				{
 					AddLogger(e, "imread() error");
 				}
 
-				MatViewerManager::Instance().AddViewer(new MatViewer(title, output_result));
-				AddLogger(LogType::Info, "imread() create viewer: %s\n", title);
+				source.release();
 			}
 		}
 
 		//Base API
-		if (ImGui::CollapsingHeader("Base"))
+		if (ImGui::CollapsingHeader("Base API"))
 		{
 			//cvtColor()
 			if (ImGui::TreeNode(u8"色彩空间转换 cvtColor()"))
@@ -323,51 +325,25 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				//执行 cvtColor()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
 				{
-					MatViewer *viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
-					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, viewer->GetNextTitle("cvtColor"));
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("cvtColor"));
 
 					try
 					{
-						cvtColor(viewer->GetMat(), output_viewer->GetMat(), CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
-						output_viewer->is_open = true;
+						cvtColor(input_viewer->GetMat(), output_viewer->GetMat(), CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
 						output_viewer->UpdateMat();
-						output_viewer->SetViewerPos(viewer->GetNextViewerPos());
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
+
+						AddLogger(LogType::Info, "cvtColor() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
-						AddLogger(LogType::Info, "cvColor() %s\n", viewer->GetTitle());
+						AddLogger(LogType::Info, "cvtColor() error", input_viewer->GetTitle());
 					}
 
-					try
-					{
-
-
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							cvtColor(viewer->GetMat(), output_result, CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
-
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer->GetNextTitle("cvtColor"));
-							n_viewer->SetViewerPos(viewer->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-
-							AddLogger(LogType::Info, "cvColor() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
-
-							cvtColor(viewer->GetMat(), output_viewer->GetMat(), CVAPI_ColorConversionCodes.ParseIndex2Enum(arg_code_index));
-							viewer->is_open = true;
-							viewer->UpdateMat();
-							AddLogger(LogType::Info, "cvColor() %s\n", viewer->GetTitle());
-						}
-					}
-					catch (Exception e)
-					{
-						AddLogger(e, "cvtColor() error");
-					}
-					viewer = NULL;
+					input_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -393,42 +369,34 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				//执行 flip()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
 				{
-					MatViewer *viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("flip"));
+
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							flip(viewer->GetMat(), output_result, arg_flipCode_index);
+						flip(input_viewer->GetMat(), output_viewer->GetMat(), arg_flipCode_index);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer->GetNextTitle("flip"));
-							n_viewer->SetViewerPos(viewer->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "flip() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
 
-							flip(viewer->GetMat(), output_viewer->GetMat(), arg_flipCode_index);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "flip() %s\n", viewer->GetTitle());
-						}
+						AddLogger(LogType::Info, "flip() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
 						AddLogger(e, "flip() error");
 					}
-					viewer = NULL;
+					input_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
 
 			//rotate()
+
 		}
 
-		//算术操作 API
+		//图像运算操作 API
 		if (ImGui::CollapsingHeader(u8"图像运算操作"))
 		{
 			//add()
@@ -462,41 +430,30 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
 					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
-					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
-					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input2_viewer->GetNextTitle("add"));
 					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
 
 					try
 					{
-						if (arg_output_index ==  -1 || arg_output_index == items_count)
-						{
-							add(viewer1->GetMat(), viewer2->GetMat(), output_result, mask, dtype);
+						add(input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), mask, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("add"));
-							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "add() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
 
-							add(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask, dtype);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "add() %s (+) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
-
-							output_viewer = NULL;
-						}
+						AddLogger(LogType::Info, "add() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
 						AddLogger(e, "add() error");
 					}
 
-					viewer1 = NULL;
-					viewer2 = NULL;
+					mask.~_InputArray();
+					input1_viewer = NULL;
+					input2_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -532,41 +489,31 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
 					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
-					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
-					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input2_viewer->GetNextTitle("subtract"));
 					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
 
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							subtract(viewer1->GetMat(), viewer2->GetMat(), output_result, mask, dtype);
+						subtract(input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), mask, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("subtract"));
-							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "subtract() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
 
-							subtract(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask, dtype);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "subtract() %s (-) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
+						AddLogger(LogType::Info, "subtract() succeeded: %s\n", output_viewer->GetTitle());
 
-							output_viewer = NULL;
-						}
 					}
 					catch (Exception e)
 					{
 						AddLogger(e, "subtract() error");
 					}
 
-					viewer1 = NULL;
-					viewer2 = NULL;
+					mask.~_InputArray();
+					input1_viewer = NULL;
+					input2_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -592,7 +539,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				AddHelpMarker(u8"optional scale factor, default 1.0");
 				ImGui::SameLine();
 				static float scale = 1.0;
-				ImGui::SliderFloat("##scale", &scale, 0.1, 3.0, "%.1f");
+				ImGui::SliderFloat("##scale", &scale, 0.1f, 3.0f, "%.1f");
 
 				//dtype
 				//输出数组的可选深度
@@ -607,40 +554,28 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
 					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
-					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
-					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input2_viewer->GetNextTitle("multiply"));
 
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							multiply(viewer1->GetMat(), viewer2->GetMat(), output_result, scale, dtype);
+						multiply(input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), scale, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("multiply"));
-							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "multiply() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
 
-							multiply(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), scale, dtype);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "multiply() %s (*) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
-
-							output_viewer = NULL;
-						}
+						AddLogger(LogType::Info, "multiply() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
 						AddLogger(e, "multiply() error");
 					}
 
-					viewer1 = NULL;
-					viewer2 = NULL;
+					input1_viewer = NULL;
+					input2_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -666,7 +601,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				AddHelpMarker(u8"optional scale factor, default 1.0");
 				ImGui::SameLine();
 				static float scale = 1.0;
-				ImGui::SliderFloat("##scale", &scale, 0.1, 3.0, "%.1f");
+				ImGui::SliderFloat("##scale", &scale, 0.1f, 3.0f, "%.1f");
 
 				//dtype
 				ImGui::Text("dtype");
@@ -680,40 +615,28 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
 					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
-					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
-					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input2_viewer->GetNextTitle("divide"));
 
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							divide(viewer1->GetMat(), viewer2->GetMat(), output_result, scale, dtype);
+						divide(input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), scale, dtype);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("multiply"));
-							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "divide() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
 
-							divide(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), scale, dtype);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "divide() %s (/) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
-
-							output_viewer = NULL;
-						}
+						AddLogger(LogType::Info, "divide() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
 						AddLogger(e, "divide() error");
 					}
 
-					viewer1 = NULL;
-					viewer2 = NULL;
+					input1_viewer = NULL;
+					input2_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -743,33 +666,21 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
 					(arg_input1_index != -1 && arg_input2_index != -1))
 				{
-					MatViewer *viewer1 = MatViewerManager::Instance().GetViewer(arg_input1_index);
-					MatViewer *viewer2 = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index);
+					MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input2_viewer->GetNextTitle("bitwise_and"));
+
 					InputArray mask = arg_mask_index == -1 || arg_mask_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index)->GetMat();
 
 					try
 					{
-						if (arg_output_index == -1 || arg_output_index == items_count)
-						{
-							bitwise_and(viewer1->GetMat(), viewer2->GetMat(), output_result, mask);
+						bitwise_and(input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), mask);
 
-							MatViewer *n_viewer = MatViewerManager::Instance().GetViewer(viewer2->GetNextTitle("bitwise_and"));
-							n_viewer->SetViewerPos(viewer2->GetNextViewerPos());
-							n_viewer->is_open = true;
-							n_viewer->LoadMat(output_result);
-							AddLogger(LogType::Info, "bitwise_and() create viewer: %s\n", n_viewer->GetTitle());
-						}
-						else
-						{
-							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index);
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
 
-							bitwise_and(viewer1->GetMat(), viewer2->GetMat(), output_viewer->GetMat(), mask);
-							output_viewer->is_open = true;
-							output_viewer->UpdateMat();
-							AddLogger(LogType::Info, "bitwise_and() %s (&) %s\n", viewer1->GetTitle(), viewer2->GetTitle());
-
-							output_viewer = NULL;
-						}
+						AddLogger(LogType::Info, "bitwise_and() succeeded: %s\n", output_viewer->GetTitle());
 					}
 					catch (Exception e)
 					{
@@ -777,8 +688,9 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 					}
 
 					mask.~_InputArray();
-					viewer1 = NULL;
-					viewer2 = NULL;
+					input1_viewer = NULL;
+					input2_viewer = NULL;
+					output_viewer = NULL;
 				}
 				ImGui::TreePop();
 			}
@@ -790,9 +702,18 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			//bitwise_not()
 		}
 
+		//二值图像分析
+		if (ImGui::CollapsingHeader(u8"二值图像分析"))
+		{
 
-		//release output
-		output_result.release();
+		}
+
+		//图像形态学
+		if (ImGui::CollapsingHeader(u8"图像形态学"))
+		{
+
+		}
+		
 	}
 
 	//end

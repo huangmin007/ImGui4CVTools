@@ -43,7 +43,7 @@ void MatViewerManager::RenderViewer()
 }
 
 
-
+/*
 Mat MatViewerManager::GetMat(int index)
 {
 	return viewers[index]->GetMat();
@@ -64,13 +64,13 @@ Mat MatViewerManager::GetMat(const char* title)
 	Mat temp;
 	return temp;
 }
-
+*/
 
 /*
 MatViewer* MatViewerManager::GetViewer(int index)
 {
 	return viewers[index];
-}
+}*/
 
 MatViewer* MatViewerManager::GetViewer(const char *title)
 {
@@ -90,15 +90,15 @@ MatViewer* MatViewerManager::GetViewer(const char *title)
 
 	return viewer;
 }
-*/
 
-MatViewer* MatViewerManager::GetViewer(int index, const char *title = NULL)
+
+MatViewer* MatViewerManager::GetViewer(int index, const char *title)
 {
 	if (index < 0 || index >= viewers.size())
 	{
 		printf("create new viewer ...\n");
 
-		MatViewer *viewer = title != NULL ? new MatViewer(title) : new MatViewer();
+		MatViewer *viewer = title == NULL ? new MatViewer() : new MatViewer(title);
 		viewers.push_back(viewer);
 
 		return viewer;
@@ -132,7 +132,6 @@ const char** MatViewerManager::GetAllTitle(const char* n_title)
 		titles[i] = viewers[i]->GetTitle();
 	}
 
-	//i++;
 	titles[i] = n_title;
 
 	return titles;
