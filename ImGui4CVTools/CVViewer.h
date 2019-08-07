@@ -21,6 +21,7 @@ private:
 	bool m_showLogWindow = true;
 	bool m_showDemoWindow = false;
 	bool m_showCVAPIWindow = true;
+	bool m_showCVAPIHelp = true;
 
 };
 

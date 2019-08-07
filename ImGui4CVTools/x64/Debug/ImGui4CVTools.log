@@ -1,10 +1,8 @@
-﻿  MatViewerManager.cpp
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewermanager.cpp(136): warning C4267: “return”: 从“size_t”转换到“int”，可能丢失数据
-  CVViewer.cpp
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(323): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  正在生成代码...
-  正在跳过...(未检测到相关更改)
-  MatViewer.cpp
-  CVAPIGuide.cpp
+﻿  CVViewer.cpp
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(379): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(429): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(601): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(935): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(951): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.exe
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.pdb (Full PDB)

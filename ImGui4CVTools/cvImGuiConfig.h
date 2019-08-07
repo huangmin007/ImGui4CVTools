@@ -24,9 +24,71 @@ using namespace std;
 static float BTN_HEIGHT = 22.0;
 
 //ImGui CV API Argument Left width
-static float COL_LEFT_WIDTH = 100;
+static float COL_LEFT_WIDTH = 100.0;
 
-struct ExampleAppLog;
+//cv rtype char
+static const char* cv_rtype_char[40] = {};
+static map <const char*, int>::const_iterator cv_rtype_it;
+static const map<const char*, int> cv_rtype_map = 
+{ 
+	pair<const char*, int>("CV_8U", CV_8U),
+	pair<const char*, int>("CV_8S", CV_8S),
+	pair<const char*, int>("CV_16U", CV_16U),
+	pair<const char*, int>("CV_16S", CV_16S),
+	pair<const char*, int>("CV_32S", CV_32S),
+	pair<const char*, int>("CV_32F", CV_32F),
+	pair<const char*, int>("CV_64F", CV_64F),
+	pair<const char*, int>("CV_16F", CV_16F),
+
+	pair<const char*, int>("CV_8UC1", CV_8UC1),
+	pair<const char*, int>("CV_8UC2", CV_8UC2),
+	pair<const char*, int>("CV_8UC3", CV_8UC3),
+	pair<const char*, int>("CV_8UC4", CV_8UC4),
+
+	pair<const char*, int>("CV_8SC1", CV_8SC1),
+	pair<const char*, int>("CV_8SC2", CV_8SC2),
+	pair<const char*, int>("CV_8SC3", CV_8SC3),
+	pair<const char*, int>("CV_8SC4", CV_8SC4),
+
+	pair<const char*, int>("CV_16UC1", CV_16UC1),
+	pair<const char*, int>("CV_16UC2", CV_16UC2),
+	pair<const char*, int>("CV_16UC3", CV_16UC3),
+	pair<const char*, int>("CV_16UC4", CV_16UC4),
+
+	pair<const char*, int>("CV_16SC1", CV_16SC1),
+	pair<const char*, int>("CV_16SC2", CV_16SC2),
+	pair<const char*, int>("CV_16SC3", CV_16SC3),
+	pair<const char*, int>("CV_16SC4", CV_16SC4),
+
+	pair<const char*, int>("CV_32SC1", CV_32SC1),
+	pair<const char*, int>("CV_32SC2", CV_32SC2),
+	pair<const char*, int>("CV_32SC3", CV_32SC3),
+	pair<const char*, int>("CV_32SC4", CV_32SC4),
+
+	pair<const char*, int>("CV_32FC1", CV_32FC1),
+	pair<const char*, int>("CV_32FC2", CV_32FC2),
+	pair<const char*, int>("CV_32FC3", CV_32FC3),
+	pair<const char*, int>("CV_32FC4", CV_32FC4),
+
+	pair<const char*, int>("CV_64FC1", CV_64FC1),
+	pair<const char*, int>("CV_64FC2", CV_64FC2),
+	pair<const char*, int>("CV_64FC3", CV_64FC3),
+	pair<const char*, int>("CV_64FC4", CV_64FC4),
+
+	pair<const char*, int>("CV_16FC1", CV_16FC1),
+	pair<const char*, int>("CV_16FC2", CV_16FC2),
+	pair<const char*, int>("CV_16FC3", CV_16FC3),
+	pair<const char*, int>("CV_16FC4", CV_16FC4),
+};
+
+static int GetCVRtype(int index)
+{
+	cv_rtype_it = cv_rtype_map.begin();
+	for (int i = 0; cv_rtype_it != cv_rtype_map.end(); cv_rtype_it++, i++)
+		if (index == i)	return cv_rtype_it->second;
+
+	return -1;
+}
 
 
 // Usage:
@@ -174,11 +236,14 @@ enum LogType
 static ExampleAppLog logger;
 static void AddLogger(Exception ex, const char *msg, ...);
 static void AddLogger(LogType type, const char *msg, ...);
+static void AddMarker(const char* desc);
 static void AddHelpMarker(const char* desc);
+static void AddLeftLabel(const char *label, const char *helpDes = NULL);
 
 static void ShowLoggerWindow(bool* p_open);
 static void ShowCVAPIWindow(GLFWwindow *window);
-static void ShowMainMenuBar(bool &m_showDemoWindow, bool &m_showCVAPIWindow, bool &m_showLogger);
+static void ShowCVAPIHelpWindow(bool *p_open);
+static void ShowMainMenuBar(bool &m_showDemoWindow, bool &m_showCVAPIWindow, bool &m_showLogger, bool &m_showCVAPIHelp);
 static void SetDisplayDPI(GLFWwindow *window, float scale);
 
 //i:inputArray
@@ -188,3 +253,7 @@ static void SetDisplayDPI(GLFWwindow *window, float scale);
 //_:下划线之后表示可选参数，或使用默认参数
 typedef void(*iio_id)(InputArray src1, InputArray src2, OutputArray dst, InputArray mask, int dtype);
 typedef void(*iio_fd)(InputArray src1, InputArray src2, OutputArray dst, double scale, int dtype);
+
+typedef void(*iio_i)(InputArray src1, InputArray src2, OutputArray dst, InputArray mask);
+typedef void(*io_i)(InputArray src1, OutputArray src2, InputArray mask);
+//typedef void(*iod_d)(InputArray src1, OutputArray src2, int code, int dstCn);

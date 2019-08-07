@@ -90,8 +90,6 @@ private:
 	map <const char*, T> enum_map;
 };
 
-
-
 EnumParser<ColorConversionCodes>::EnumParser()
 {
 	enum_map["COLOR_BGR2GRAY"] = ColorConversionCodes::COLOR_BGR2GRAY;
@@ -109,8 +107,28 @@ EnumParser<ColorConversionCodes>::EnumParser()
 	enum_map["COLOR_YUV2RGB"] = ColorConversionCodes::COLOR_YUV2RGB;
 
 	enum_map["COLOR_BGR2YCrCb"] = ColorConversionCodes::COLOR_BGR2YCrCb;
-}
+};
 
+EnumParser<NormTypes>::EnumParser()
+{
+	enum_map["NORM_INF"] = NormTypes::NORM_INF;
+	enum_map["NORM_L1"] = NormTypes::NORM_L1;
+	enum_map["NORM_L2"] = NormTypes::NORM_L2;
+	enum_map["NORM_L2SQR"] = NormTypes::NORM_L2SQR;
+	enum_map["NORM_HAMMING"] = NormTypes::NORM_HAMMING;
+	enum_map["NORM_HAMMING2"] = NormTypes::NORM_HAMMING2;
+	enum_map["NORM_TYPE_MASK"] = NormTypes::NORM_TYPE_MASK;
+	enum_map["NORM_RELATIVE"] = NormTypes::NORM_RELATIVE;
+	enum_map["NORM_MINMAX"] = NormTypes::NORM_MINMAX;
+};
+
+EnumParser<LineTypes>::EnumParser()
+{
+	enum_map["FILLED"] = LineTypes::FILLED;
+	enum_map["LINE_4"] = LineTypes::LINE_4;
+	enum_map["LINE_8"] = LineTypes::LINE_8;
+	enum_map["LINE_AA"] = LineTypes::LINE_AA;
+}
 
 //Ñ¡ÔñÍ¼Æ¬ÎÄ¼þ
 //@param window parent window

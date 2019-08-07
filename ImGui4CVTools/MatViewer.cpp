@@ -7,7 +7,6 @@
 
 MatViewer::MatViewer()
 {
-	char c_time[32];
 	GetCurrentForamtTime(n_title, 32, "[%X]");
 }
 
@@ -42,17 +41,26 @@ void MatViewer::Render()
 {
 	if (n_image.empty() || texture_id == -1) return;
 
-	//ImVec2 vec2 = ImGui::GetWindowPos();
-	//ImGui::SetNextWindowPos(ImVec2(vec2.x + 40, vec2.y + 20), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(n_image.cols, n_image.rows), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(n_image.cols, n_image.rows), ImGuiCond_Once);
 
 	//static constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
 	
 	//Buttons x1.5 x1.0 x0.5
 	if (ImGui::Begin(n_title, &is_open))
 	{
-		//ImGui::SetWindowPos(pos);
+		//默认按扭大小
+		const ImVec2 btn_size = ImVec2(40, BTN_HEIGHT);
+		//窗体允许缩放比例
+		const double rate[6] = { 2.0, 1.5, 1.0, 0.8, 0.5, 0.2 };
+
+		//render
+		if (ImGui::Button(is_render ? "-" : "+", ImVec2(BTN_HEIGHT, BTN_HEIGHT)))
+		{
+			is_render = !is_render;
+			ImGui::SetWindowSize(ImVec2(n_image.cols, is_render ? n_image.rows : 60));
+		}
+		ImGui::SameLine();
 
 		//rate x2.0 x1.0 x0.5
 		for (int i = 0; i < 6; i++)
@@ -62,13 +70,20 @@ void MatViewer::Render()
 			char label[8];
 			sprintf_s(label, "x%.1f", rate[i]);
 
-			if (ImGui::Button(label, btn_size))
+			if (ImGui::Button(label, btn_size) && is_render)
 				ImGui::SetWindowSize(ImVec2(n_image.cols * rate[i], n_image.rows * rate[i]));
 		}
 		ImGui::SameLine();
 
+		//codes
+		if (ImGui::Button("codes", ImVec2(70, BTN_HEIGHT)))
+		{
+
+		}
+		ImGui::SameLine();
+
 		//imshow
-		if (ImGui::Button("imshow", ImVec2(80, BTN_HEIGHT)))
+		if (ImGui::Button("imshow", ImVec2(70, BTN_HEIGHT)))
 		{
 			if (!n_image.empty())
 			{
@@ -78,14 +93,12 @@ void MatViewer::Render()
 		}
 
 		//Image
-		ImGui::Image((GLuint*)texture_id, ImGui::GetContentRegionAvail());
+		if(is_render)
+			ImGui::Image((GLuint*)texture_id, ImGui::GetContentRegionAvail());
 	}
 
-	ImGui::End();
-
 	pos = ImGui::GetWindowPos();
-	size = ImGui::GetWindowSize();
-
+	ImGui::End();
 }
 
 void MatViewer::SetViewerPos(ImVec2 posi)
@@ -99,18 +112,16 @@ ImVec2 MatViewer::GetViewerPos()
 }
 ImVec2 MatViewer::GetNextViewerPos()
 {
-	return ImVec2(pos.x + 40, pos.y + 40);
+	return ImVec2(pos.x + 30, pos.y + 30);
 }
 
-ImVec2 MatViewer::GetViewerSize()
-{
-	return size;
-}
 
 void MatViewer::LoadMat(Mat mat)
 {
 	if (mat.empty())	return;
 	if (mat.ptr() != n_image.ptr())	mat.copyTo(n_image);
+
+	if (!is_render)	return;
 
 	if (n_image.type() != 16)
 		cvtColor(mat, texture, COLOR_GRAY2BGR);
@@ -146,7 +157,7 @@ void MatViewer::LoadMat(Mat mat, const char *title)
 
 void MatViewer::UpdateMat()
 {
-	if (n_image.empty())return;
+	if (n_image.empty() || !is_render)return;
 
 	if (n_image.type() != 16)
 		cvtColor(n_image, texture, COLOR_GRAY2BGR);
@@ -176,7 +187,6 @@ const char* MatViewer::GetNextTitle(const char *title)
 {
 	static char nx_title[MAX_CHAR];
 	//memset(nx_title, 0x00, MAX_CHAR);
-
 	sprintf_s(nx_title, "%s -> %s", n_title, title);
 
 	return nx_title;
