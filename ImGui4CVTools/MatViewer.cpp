@@ -25,12 +25,17 @@ MatViewer::MatViewer(const char *title, Mat image):MatViewer(title)
 
 MatViewer::~MatViewer()
 {
+	printf("clear...\n");
+	is_open = false;
+
 	texture_id = -1;
-	if (!n_image.empty())
-	{
-		n_image.release();
-		n_image = NULL;
-	}
+	memset(n_title, 0x00, MAX_CHAR);
+
+	if (!n_image.empty()) n_image.release();
+	if (!texture.empty()) texture.release();
+
+	n_image = NULL;
+	texture = NULL;
 }
 
 void MatViewer::Render()
@@ -43,7 +48,7 @@ void MatViewer::Render()
 	ImGui::SetNextWindowSize(ImVec2(n_image.cols, n_image.rows), ImGuiCond_FirstUseEver);
 
 	//static constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
-
+	
 	//Buttons x1.5 x1.0 x0.5
 	if (ImGui::Begin(n_title, &is_open))
 	{

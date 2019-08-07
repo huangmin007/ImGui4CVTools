@@ -6,7 +6,7 @@
 #include <string>
 #include <time.h>
 
-#include "cvImGuiConfig.h";
+#include "cvImGuiConfig.h"
 #include "CVAPIUtils.h"
 
 #include "MatViewer.h"
@@ -128,9 +128,16 @@ static void AddLogger(LogType type, const char *msg, ...)
 	logger.AddLog("[%02d:%02d:%02d.%03d][%s]  %s", sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds, s_type[type], buf);
 }
 //添加异常信息
-static void AddLogger(Exception ex, const char *msg)
+static void AddLogger(Exception ex, const char *msg, ...)
 {
-	AddLogger(LogType::Error, "%s: \n\t\t\t\t%s\n", msg, ex.what());
+	char buf[1024];
+	va_list args;
+	va_start(args, msg);
+	vsnprintf(buf, IM_ARRAYSIZE(buf), msg, args);
+	buf[IM_ARRAYSIZE(buf) - 1] = 0;
+	va_end(args);
+
+	AddLogger(LogType::Error, "%s: \n\t\t\t\t%s\n", buf, ex.what());
 	//AddLogger(LogType::Error, "%s: code:%d func:%s msg:%s, line:%d\n \t\t\t\n%s\n", msg, e.code, e.func, e.msg, e.line, e.what());
 }
 
@@ -399,6 +406,79 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 		//图像运算操作 API
 		if (ImGui::CollapsingHeader(u8"图像运算操作"))
 		{
+			//add() subtract()
+			{
+				static const int count = 2;
+				static const iio_id func_addr[count] = { add, subtract };
+				static const char *func_name[count] = { u8"add()", u8"subtract()" };
+
+				static int arg_input1_index[count] = { -1, -1 };
+				static int arg_input2_index[count] = { -1, -1 };
+				static int arg_output_index[count] = { -1, -1 };
+				static int arg_mask_index[count] = { -1, -1 };
+				static int arg_dtype_value[count] = { -1,-1 };
+
+				for (int i = 0; i < count; i++)
+				{
+					if (ImGui::TreeNode(func_name[i]))
+					{
+						//input1
+						AddViewerCombo("input1", &arg_input1_index[i], true);
+
+						//input2
+						AddViewerCombo("input2", &arg_input2_index[i], true);
+
+						//output
+						AddViewerCombo("output", &arg_output_index[i], false);
+
+						//mask
+						AddViewerCombo("mask", &arg_mask_index[i], false);
+
+						//dtype
+						ImGui::Text("dtype");
+						ImGui::SameLine(COL_LEFT_WIDTH);
+						AddHelpMarker(u8"输出可选数组深度，默认为 -1");
+						ImGui::SameLine();
+						ImGui::SliderInt("##dtype", &arg_dtype_value[i], -1, 4);
+
+						//执行
+						if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
+							(arg_input1_index[i] != -1 && arg_input2_index[i] != -1))
+						{
+							MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index[i]);
+							MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index[i]);
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index[i], input2_viewer->GetNextTitle(func_name[i]));
+							InputArray mask = arg_mask_index[i] == -1 || arg_mask_index[i] == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_mask_index[i])->GetMat();
+
+							arg_mask_index[i] = arg_mask_index[i] == items_count ? -1 : arg_mask_index[i];
+							arg_output_index[i] = arg_output_index[i] == items_count ? -1 : arg_output_index[i];
+
+							try
+							{
+								func_addr[i](input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), mask, arg_dtype_value[i]);
+
+								output_viewer->UpdateMat();
+								output_viewer->is_open = true;
+								output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
+
+								AddLogger(LogType::Info, "%s succeeded: %s\n", func_name[i], output_viewer->GetTitle());
+							}
+							catch (Exception e)
+							{
+								AddLogger(e, "%s error, remove viewer:%s", func_name[i], output_viewer->GetTitle());
+								MatViewerManager::Instance().RemoveViewer(output_viewer);
+							}
+
+							mask.~_InputArray();
+							input1_viewer = NULL;
+							input2_viewer = NULL;
+							output_viewer = NULL;
+						}
+						ImGui::TreePop();
+					}
+				}
+			}
+			/*
 			//add()
 			if (ImGui::TreeNode(u8"add()"))
 			{
@@ -517,7 +597,82 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				}
 				ImGui::TreePop();
 			}
+			*/
+			
+			//multiply() divide()
+			{
+				static const int count = 2;
+				static const iio_fd func_addr[count] = { multiply , divide };
+				static const char *func_name[count] = { u8"multiply()" , u8"divide()" };
 
+				static int arg_input1_index[count] = { -1, -1 };
+				static int arg_input2_index[count] = { -1, -1 };
+				static int arg_output_index[count] = { -1, -1 };
+				static float arg_scale_value[count] = { 1.0, 1.0 };
+				static int arg_dtype_value[count] = { -1,-1 };
+
+				for (int i = 0; i < count; i++)
+				{
+					if (ImGui::TreeNode(func_name[i]))
+					{
+						//input1
+						AddViewerCombo("input1", &arg_input1_index[i], true);
+
+						//input2
+						AddViewerCombo("input2", &arg_input2_index[i], true);
+
+						//output
+						AddViewerCombo("output", &arg_output_index[i], false);
+
+						//scale
+						ImGui::Text("scale");
+						ImGui::SameLine(COL_LEFT_WIDTH);
+						AddHelpMarker(u8"optional scale factor, default 1.0");
+						ImGui::SameLine();
+						ImGui::SliderFloat("##scale", &arg_scale_value[i], 0.1f, 3.0f, "%.1f");
+
+						//dtype
+						ImGui::Text("dtype");
+						ImGui::SameLine(COL_LEFT_WIDTH);
+						AddHelpMarker(u8"输出可选数组深度，默认为 -1");
+						ImGui::SameLine();
+						ImGui::SliderInt("##dtype", &arg_dtype_value[i], -1, 4);
+
+						//执行
+						if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
+							(arg_input1_index[i] != -1 && arg_input2_index[i] != -1))
+						{
+							MatViewer *input1_viewer = MatViewerManager::Instance().GetViewer(arg_input1_index[i]);
+							MatViewer *input2_viewer = MatViewerManager::Instance().GetViewer(arg_input2_index[i]);
+							MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index[i], input2_viewer->GetNextTitle(func_name[i]));
+							arg_output_index[i] = arg_output_index[i] == items_count ? -1 : arg_output_index[i];
+
+							try
+							{
+								func_addr[i](input1_viewer->GetMat(), input2_viewer->GetMat(), output_viewer->GetMat(), arg_scale_value[i], arg_dtype_value[i]);
+
+								output_viewer->UpdateMat();
+								output_viewer->is_open = true;
+								output_viewer->SetViewerPos(input2_viewer->GetNextViewerPos());
+
+								AddLogger(LogType::Info, "%s succeeded: %s\n", func_name[i], output_viewer->GetTitle());
+							}
+							catch (Exception e)
+							{
+								AddLogger(e, "%s error, remove viewer:%s", func_name[i], output_viewer->GetTitle());
+								MatViewerManager::Instance().RemoveViewer(output_viewer);
+							}
+
+							input1_viewer = NULL;
+							input2_viewer = NULL;
+							output_viewer = NULL;
+						}
+						ImGui::TreePop();
+					}
+				}
+			}
+
+			/*
 			//multiply()
 			if (ImGui::TreeNode(u8"multiply()"))
 			{
@@ -640,7 +795,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				}
 				ImGui::TreePop();
 			}
-
+			*/
 			//add, subtract, divide, scaleAdd, addWeighted, accumulate, accumulateProduct, accumulateSquare,
 
 			//bitwise_and()
@@ -705,13 +860,14 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 		//二值图像分析
 		if (ImGui::CollapsingHeader(u8"二值图像分析"))
 		{
+			ImGui::Text(u8"待添加 ...");
 
 		}
 
 		//图像形态学
 		if (ImGui::CollapsingHeader(u8"图像形态学"))
 		{
-
+			ImGui::Text(u8"待添加 ...");
 		}
 		
 	}

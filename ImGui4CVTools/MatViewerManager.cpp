@@ -19,7 +19,18 @@ void MatViewerManager::AddViewer(MatViewer *viewer)
 
 void MatViewerManager::RemoveViewer(MatViewer *viewer)
 {
-
+	for (int i = 0; i < viewers.size(); i++)
+	{
+		if (viewer == viewers[i])
+		{
+			printf("remove viewer ...\n");
+			viewers.erase(viewers.begin() + i);
+			
+			delete viewer;
+			viewer = NULL;
+			return;
+		}
+	}
 }
 
 bool MatViewerManager::HasViewer(const char *title)
@@ -42,36 +53,7 @@ void MatViewerManager::RenderViewer()
 	}
 }
 
-
 /*
-Mat MatViewerManager::GetMat(int index)
-{
-	return viewers[index]->GetMat();
-}
-
-Mat MatViewerManager::GetMat(const char* title)
-{
-	for (int i = 0; i < viewers.size(); i++)
-	{
-		if (viewers[i] == nullptr)continue;
-
-		if (strlen(viewers[i]->GetTitle()) == strlen(title) && strcmp(viewers[i]->GetTitle(), title) == 0)
-		{
-			return viewers[i]->GetMat();
-		}
-	}
-
-	Mat temp;
-	return temp;
-}
-*/
-
-/*
-MatViewer* MatViewerManager::GetViewer(int index)
-{
-	return viewers[index];
-}*/
-
 MatViewer* MatViewerManager::GetViewer(const char *title)
 {
 	for (int i = 0; i < viewers.size(); i++)
@@ -90,21 +72,33 @@ MatViewer* MatViewerManager::GetViewer(const char *title)
 
 	return viewer;
 }
-
+*/
 
 MatViewer* MatViewerManager::GetViewer(int index, const char *title)
 {
-	if (index < 0 || index >= viewers.size())
+	//优先索引查找
+	if (index >= 0 && index < viewers.size())	return viewers[index];
+
+	//标题查找
+	if (title != NULL)
 	{
-		printf("create new viewer ...\n");
+		for (int i = 0; i < viewers.size(); i++)
+		{
+			if (viewers[i] == nullptr)continue;
 
-		MatViewer *viewer = title == NULL ? new MatViewer() : new MatViewer(title);
-		viewers.push_back(viewer);
-
-		return viewer;
+			if (strlen(viewers[i]->GetTitle()) == strlen(title) && strcmp(viewers[i]->GetTitle(), title) == 0)
+			{
+				return viewers[i];
+			}
+		}
 	}
 
-	return viewers[index];
+	printf("create new viewer ...\n");
+
+	MatViewer *viewer = title == NULL ? new MatViewer() : new MatViewer(title);
+	viewers.push_back(viewer);
+
+	return viewer;
 }
 
 

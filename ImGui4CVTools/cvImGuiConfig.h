@@ -172,7 +172,7 @@ enum LogType
 
 
 static ExampleAppLog logger;
-static void AddLogger(Exception ex, const char *msg);
+static void AddLogger(Exception ex, const char *msg, ...);
 static void AddLogger(LogType type, const char *msg, ...);
 static void AddHelpMarker(const char* desc);
 
@@ -180,3 +180,11 @@ static void ShowLoggerWindow(bool* p_open);
 static void ShowCVAPIWindow(GLFWwindow *window);
 static void ShowMainMenuBar(bool &m_showDemoWindow, bool &m_showCVAPIWindow, bool &m_showLogger);
 static void SetDisplayDPI(GLFWwindow *window, float scale);
+
+//i:inputArray
+//o:outputArray
+//d:int/uint
+//f:float/double
+//_:下划线之后表示可选参数，或使用默认参数
+typedef void(*iio_id)(InputArray src1, InputArray src2, OutputArray dst, InputArray mask, int dtype);
+typedef void(*iio_fd)(InputArray src1, InputArray src2, OutputArray dst, double scale, int dtype);
