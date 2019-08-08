@@ -31,10 +31,10 @@ MatViewer::~MatViewer()
 	memset(n_title, 0x00, MAX_CHAR);
 
 	if (!n_image.empty()) n_image.release();
-	if (!texture.empty()) texture.release();
+	//if (!texture.empty()) texture.release();
 
 	n_image = NULL;
-	texture = NULL;
+	//texture = NULL;
 }
 
 void MatViewer::Render()
@@ -42,7 +42,7 @@ void MatViewer::Render()
 	if (n_image.empty() || texture_id == -1) return;
 
 	ImGui::SetNextWindowPos(pos, ImGuiCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(n_image.cols, n_image.rows), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(n_image.cols + 18, n_image.rows + 65), ImGuiCond_Once);
 
 	//static constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
 	
@@ -71,7 +71,7 @@ void MatViewer::Render()
 			sprintf_s(label, "x%.1f", rate[i]);
 
 			if (ImGui::Button(label, btn_size) && is_render)
-				ImGui::SetWindowSize(ImVec2(n_image.cols * rate[i], n_image.rows * rate[i]));
+				ImGui::SetWindowSize(ImVec2(n_image.cols * rate[i] + 18 , n_image.rows * rate[i] + 65));
 		}
 		ImGui::SameLine();
 
@@ -115,36 +115,13 @@ ImVec2 MatViewer::GetNextViewerPos()
 	return ImVec2(pos.x + 30, pos.y + 30);
 }
 
-
 void MatViewer::LoadMat(Mat mat)
 {
 	if (mat.empty())	return;
 	if (mat.ptr() != n_image.ptr())	mat.copyTo(n_image);
 
-	if (!is_render)	return;
-
-	if (n_image.type() != 16)
-		cvtColor(mat, texture, COLOR_GRAY2BGR);
-	else
-		texture = n_image;
-	
-	try
-	{
-		glGenTextures(1, &texture_id);
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.cols, texture.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, texture.ptr());
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	catch (exception e)
-	{
-		printf("std exception: %s", e.what());
-	}
-
-	//mat.release();
-	//texture.release();
+	if (is_render)
+		texture_id = cvMat2glTexture(n_image);
 }
 
 void MatViewer::LoadMat(Mat mat, const char *title)
@@ -159,18 +136,7 @@ void MatViewer::UpdateMat()
 {
 	if (n_image.empty() || !is_render)return;
 
-	if (n_image.type() != 16)
-		cvtColor(n_image, texture, COLOR_GRAY2BGR);
-	else
-		texture = n_image;
-
-	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.cols, texture.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, texture.ptr());
-	glGenerateMipmap(GL_TEXTURE_2D);
+	texture_id = cvMat2glTexture(n_image);
 }
 
 Mat& MatViewer::GetMat()
@@ -186,8 +152,74 @@ const char* MatViewer::GetTitle()
 const char* MatViewer::GetNextTitle(const char *title)
 {
 	static char nx_title[MAX_CHAR];
-	//memset(nx_title, 0x00, MAX_CHAR);
 	sprintf_s(nx_title, "%s -> %s", n_title, title);
 
 	return nx_title;
+}
+
+GLuint MatViewer::cvMat2glTexture(const cv::Mat& img)
+{
+	Mat image;
+	if (img.channels() == 1)
+		cvtColor(img, image, COLOR_GRAY2BGR);
+	else
+		image = img;
+
+	//使用快速4字节对齐（默认设置）。
+	glPixelStorei(GL_UNPACK_ALIGNMENT, (image.step & 3) ? 1 : 4);
+
+	//设置数据中一整行的长度（不需要等于image.cols）
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, static_cast<GLint>(image.step / image.elemSize()));
+
+	GLenum internalformat = GL_RGB32F;
+	GLenum externalformat = GL_BGR;
+
+	if (image.channels() == 4) internalformat = GL_RGBA;
+	if (image.channels() == 3) internalformat = GL_RGB;
+	if (image.channels() == 2) internalformat = GL_RG;
+	if (image.channels() == 1)
+	{
+		internalformat = GL_RED;	// GL_RED Working, GL_BLUE,GL_GREEN Not Working
+		externalformat = GL_RED;	// GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F, GL_R32F NOT WORKING!
+	}
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//GL_LINEAR对应线性滤波, GL_NEAREST对应最近邻滤波方式.
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	try 
+	{
+		glTexImage2D(GL_TEXTURE_2D,
+			/* level */				0,
+			/* internalFormat */	internalformat,
+			/* width */				image.cols,
+			/* height */			image.rows,
+			/* border */			0,
+			/* format */			externalformat,
+			/* type */				GL_UNSIGNED_BYTE, //GL_FLOAT,
+			/* *data */				image.ptr());
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	catch (std::exception & e)
+	{
+		printf("Mat 2 glTexture Error: %s.\n", e.what());
+	}
+
+	if (img.channels() == 1)
+	{
+		image.release();
+		image = NULL;
+	}
+
+	return texture;
 }

@@ -130,6 +130,69 @@ EnumParser<LineTypes>::EnumParser()
 	enum_map["LINE_AA"] = LineTypes::LINE_AA;
 }
 
+EnumParser<MarkerTypes>::EnumParser()
+{
+	enum_map["MARKER_CROSS"] = MarkerTypes::MARKER_CROSS;
+	enum_map["MARKER_TILTED_CROSS"] = MarkerTypes::MARKER_TILTED_CROSS;
+	enum_map["MARKER_STAR"] = MarkerTypes::MARKER_STAR;
+	enum_map["MARKER_DIAMOND"] = MarkerTypes::MARKER_DIAMOND;
+	enum_map["MARKER_SQUARE"] = MarkerTypes::MARKER_SQUARE;
+	enum_map["MARKER_TRIANGLE_UP"] = MarkerTypes::MARKER_TRIANGLE_UP;
+	enum_map["MARKER_TRIANGLE_DOWN"] = MarkerTypes::MARKER_TRIANGLE_DOWN;
+}
+
+EnumParser<InterpolationFlags>::EnumParser()
+{
+	enum_map["INTER_NEAREST"] = InterpolationFlags::INTER_NEAREST;
+	enum_map["INTER_LINEAR"] = InterpolationFlags::INTER_LINEAR;
+	enum_map["INTER_CUBIC"] = InterpolationFlags::INTER_CUBIC;
+	enum_map["INTER_AREA"] = InterpolationFlags::INTER_AREA;
+	enum_map["INTER_LANCZOS4"] = InterpolationFlags::INTER_LANCZOS4;
+	enum_map["INTER_LINEAR_EXACT"] = InterpolationFlags::INTER_LINEAR_EXACT;
+	enum_map["INTER_MAX"] = InterpolationFlags::INTER_MAX;
+	enum_map["WARP_FILL_OUTLIERS"] = InterpolationFlags::WARP_FILL_OUTLIERS;
+	enum_map["WARP_INVERSE_MAP"] = InterpolationFlags::WARP_INVERSE_MAP;
+}
+
+EnumParser<HersheyFonts>::EnumParser()
+{
+	enum_map["FONT_HERSHEY_SIMPLEX"] = HersheyFonts::FONT_HERSHEY_SIMPLEX;
+	enum_map["FONT_HERSHEY_PLAIN"] = HersheyFonts::FONT_HERSHEY_PLAIN;
+	enum_map["FONT_HERSHEY_DUPLEX"] = HersheyFonts::FONT_HERSHEY_DUPLEX;
+	enum_map["FONT_HERSHEY_COMPLEX"] = HersheyFonts::FONT_HERSHEY_COMPLEX;
+	enum_map["FONT_HERSHEY_TRIPLEX"] = HersheyFonts::FONT_HERSHEY_TRIPLEX;
+	enum_map["FONT_HERSHEY_COMPLEX_SMALL"] = HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL;
+	enum_map["FONT_HERSHEY_SCRIPT_SIMPLEX"] = HersheyFonts::FONT_HERSHEY_SCRIPT_SIMPLEX;
+	enum_map["FONT_HERSHEY_SCRIPT_COMPLEX"] = HersheyFonts::FONT_HERSHEY_SCRIPT_COMPLEX;
+	enum_map["FONT_ITALIC"] = HersheyFonts::FONT_ITALIC;
+
+}
+
+EnumParser<ColormapTypes>::EnumParser()
+{
+	enum_map["COLORMAP_AUTUMN"] = ColormapTypes::COLORMAP_AUTUMN;
+	enum_map["COLORMAP_BONE"] = ColormapTypes::COLORMAP_BONE;
+	enum_map["COLORMAP_JET"] = ColormapTypes::COLORMAP_JET;
+	enum_map["COLORMAP_WINTER"] = ColormapTypes::COLORMAP_WINTER;
+	enum_map["COLORMAP_RAINBOW"] = ColormapTypes::COLORMAP_RAINBOW;
+	enum_map["COLORMAP_OCEAN"] = ColormapTypes::COLORMAP_OCEAN;
+	enum_map["COLORMAP_SUMMER"] = ColormapTypes::COLORMAP_SUMMER;
+	enum_map["COLORMAP_SPRING"] = ColormapTypes::COLORMAP_SPRING;
+	enum_map["COLORMAP_COOL"] = ColormapTypes::COLORMAP_COOL;
+	enum_map["COLORMAP_HSV"] = ColormapTypes::COLORMAP_HSV;
+	enum_map["COLORMAP_PINK"] = ColormapTypes::COLORMAP_PINK;
+	enum_map["COLORMAP_HOT"] = ColormapTypes::COLORMAP_HOT;
+	enum_map["COLORMAP_PARULA"] = ColormapTypes::COLORMAP_PARULA;
+	enum_map["COLORMAP_MAGMA"] = ColormapTypes::COLORMAP_MAGMA;
+	enum_map["COLORMAP_INFERNO"] = ColormapTypes::COLORMAP_INFERNO;
+	enum_map["COLORMAP_PLASMA"] = ColormapTypes::COLORMAP_PLASMA;
+	enum_map["COLORMAP_VIRIDIS"] = ColormapTypes::COLORMAP_VIRIDIS;
+	enum_map["COLORMAP_CIVIDIS"] = ColormapTypes::COLORMAP_CIVIDIS;
+	enum_map["COLORMAP_TWILIGHT"] = ColormapTypes::COLORMAP_TWILIGHT;
+	enum_map["COLORMAP_TWILIGHT_SHIFTED"] = ColormapTypes::COLORMAP_TWILIGHT_SHIFTED;
+
+}
+
 //选择图片文件
 //@param window parent window
 //@param filename output image file path
@@ -173,4 +236,71 @@ static void GetCurrentForamtTime(char *buffer, size_t bsize, const char* format)
 	localtime_s(&n_tm, &n_now);
 
 	strftime(buffer, bsize, format, &n_tm);
+}
+
+
+static Mat drawCalcHist(Mat input)
+{
+	const int channels[1] = { 0 };
+	const int bins[1] = { 256 };
+	float hranges[2] = { 0, 255 };
+	const float* ranges[1] = { hranges };
+	int dims = input.channels();
+
+	// 显示直方图
+	int hist_w = 512;
+	int hist_h = 256;
+	int bin_w = cvRound((double)hist_w / bins[0]);
+	Mat histImage = Mat::zeros(hist_h, hist_w, CV_8UC3);
+
+	if (dims == 3)
+	{
+		vector<Mat> bgr_plane;
+		split(input, bgr_plane);
+
+		Mat b_hist, g_hist, r_hist;
+
+		// 计算Blue, Green, Red通道的直方图
+		calcHist(&bgr_plane[0], 1, 0, Mat(), b_hist, 1, bins, ranges);
+		calcHist(&bgr_plane[1], 1, 0, Mat(), g_hist, 1, bins, ranges);
+		calcHist(&bgr_plane[2], 1, 0, Mat(), r_hist, 1, bins, ranges);
+
+		// 归一化直方图数据
+		normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
+		normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
+		normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
+
+		// 绘制直方图曲线
+		for (int i = 1; i < bins[0]; i++)
+		{
+			line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
+				Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))), Scalar(255, 0, 0), 1, 8, 0);
+
+			line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
+				Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))), Scalar(0, 255, 0), 1, 8, 0);
+
+			line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
+				Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))), Scalar(0, 0, 255), 1, 8, 0);
+		}
+
+		return histImage;
+	}
+	else
+	{
+		Mat hist;
+		// 计算单通道的直方图
+		calcHist(&input, 1, 0, Mat(), hist, 1, bins, ranges);
+
+		// 归一化直方图数据
+		normalize(hist, hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
+
+		// 绘制直方图曲线
+		for (int i = 1; i < bins[0]; i++) 
+		{
+			line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(hist.at<float>(i - 1))),
+				Point(bin_w*(i), hist_h - cvRound(hist.at<float>(i))), Scalar(255, 255, 255), 1, 8, 0);
+		}
+
+		return histImage;
+	}
 }

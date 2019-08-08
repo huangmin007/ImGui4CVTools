@@ -24,7 +24,19 @@ using namespace std;
 static float BTN_HEIGHT = 22.0;
 
 //ImGui CV API Argument Left width
-static float COL_LEFT_WIDTH = 100.0;
+static float COL_LEFT_WIDTH = 110.0;
+
+static int ARG_SHIFT_MIN_VALUE = 0;
+static int ARG_SHIFT_MAX_VALUE = 8;
+
+static int ARG_PT_MIN_VALUE = 0;
+static int ARG_PT_MAX_VALUE = 1920;
+
+static int ARG_THICK_MIN_VALUE = -1;
+static int ARG_THICK_MAX_VALUE = 10;
+
+static float ARG_TIPLEN_MIN_VALUE = -3.0;
+static float ARG_TIPLEN_MAX_VALUE = -3.0;
 
 //cv rtype char
 static const char* cv_rtype_char[40] = {};
@@ -230,6 +242,7 @@ enum LogType
 	Info,
 	Warn,
 	Error,
+	Codes,
 };
 
 

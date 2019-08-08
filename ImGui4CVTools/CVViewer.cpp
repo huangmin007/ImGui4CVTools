@@ -260,7 +260,7 @@ static void ShowCVAPIHelpWindow(bool *p_open)
 	ImGui::SetNextWindowPos(ImVec2(500, 300), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
 	
-	ImGui::Begin("OpenCV API Help", p_open);
+	ImGui::Begin("OpenCV(v410) API Help", p_open);
 
 	ImGui::Text(u8"API参数说明：('_'之后表示可使用默认值)");
 
@@ -271,16 +271,18 @@ static void ShowCVAPIHelpWindow(bool *p_open)
 	AddTableRow("f", "float,double ...", u8"浮点点数字");
 	AddTableRow("p", "Point", u8"");
 	AddTableRow("r", "Rect", u8"");
-	AddTableRow("s", "Scalar", u8"");
+	AddTableRow("s", "Scalar", u8"Scalar,Size");
 	AddTableRow("v", "ImVec(n)", u8"");
+	AddTableRow("t", "Text", u8"");
+	AddTableRow("b", "Boolean", u8"");
 
-	ImGui::Text(u8"注意：OpenCV API 浮点类型使用的都是 double 类型，ImGui 浮点类型使用的都是 float 类型，会有一点的精度损失。");
+	ImGui::Text(u8"注意：OpenCV API 浮点类型使用的都是 double 类型，\n\tImGui 浮点类型使用的都是 float 类型，会有一点的精度损失。");
 
 	ImGui::End();
 }
 
 //添加 Viewer List Guide Combo 
-static void AddViewerCombo(const char *label, int *out_index, bool input = true, ...)
+static void AddViewerCombo(const char *label, int *out_index, bool input = true, const char *des = NULL)
 {
 	const int items_count = MatViewerManager::Instance().GetCount();
 	const char **items = MatViewerManager::Instance().GetAllTitle();
@@ -292,15 +294,27 @@ static void AddViewerCombo(const char *label, int *out_index, bool input = true,
 	static char c_label[255] = {};
 	sprintf_s(c_label, "%s%s", "##", label);
 	
+	char c_des[255] = {};
+
 	if (input)
 	{
+		if (des != NULL)
+			sprintf_s(c_des, u8"选择输入视图窗口的 InputArray 对象\n%s", des);
+		else
+			sprintf_s(c_des, u8"选择输入视图窗口的 InputArray 对象");
+
 		AddHelpMarker(u8"选择输入视图窗口的 InputArray 对象");
 		ImGui::SameLine();
 		ImGui::Combo(c_label, out_index, items, items_count);
 	}
 	else
 	{
-		AddHelpMarker(u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空");
+		if (des != NULL)
+			sprintf_s(c_des, u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空\n%s", des);
+		else
+			sprintf_s(c_des, u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空");
+
+		AddHelpMarker(c_des);
 		ImGui::SameLine();
 		ImGui::Combo(c_label, out_index, n_itmes, items_count + 1);
 	}
@@ -310,7 +324,7 @@ static void AddViewerCombo(const char *label, int *out_index, bool input = true,
 static void ShowCVAPIWindow(GLFWwindow *window)
 {
 	ImGui::SetNextWindowPos(ImVec2(10, 25), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(370, 700), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(380, 700), ImGuiCond_FirstUseEver);
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoFocusOnAppearing;
 	
@@ -400,8 +414,8 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 					}
 					catch (Exception e)
 					{
-						MatViewerManager::Instance().RemoveViewer(output_viewer);
 						AddLogger(LogType::Info, "cvtColor() error: %s\n", output_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(output_viewer);
 					}
 
 					input_viewer = NULL;
@@ -506,8 +520,8 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 					}
 					catch (Exception e)
 					{
-						MatViewerManager::Instance().RemoveViewer(output_viewer);
 						AddLogger(e, "flip() error: %s\n", output_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(output_viewer);
 					}
 					input_viewer = NULL;
 					output_viewer = NULL;
@@ -515,6 +529,66 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				ImGui::TreePop();
 			}
 			AddMarker(u8"图像翻转");
+
+			//resize()
+			if (ImGui::TreeNode(u8"resize(ios_ffd)"))
+			{
+				//InterpolationFlags Enum
+				static EnumParser<InterpolationFlags> ifs;
+
+				//input
+				static int arg_input_index = -1;
+				AddViewerCombo("input", &arg_input_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//dsize
+				static int arg_dsize_value[2] = {500, 500};
+				AddLeftLabel("dsize", "Size(width,height) 输出图像大小");
+				ImGui::DragInt2("##dsize", arg_dsize_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE * 4, "%d");
+
+				//fx fy
+				static float arg_fxy_value[2] = {0.0, 0.0};
+				AddLeftLabel("fx.fy", "fx/fy 沿水平/垂直轴的比例因子");
+				ImGui::SliderFloat2("##fxy", arg_fxy_value, 0.0, 1.0, "%.1f");
+
+				//interpolation
+				static int arg_interpolation_index = 1;
+				AddLeftLabel("interpolation", u8"插值方法/类型");
+				ImGui::Combo("##interpolation", &arg_interpolation_index, ifs.ParseMap2Items(), ifs.GetMapCount());
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("resize()"));
+					
+					try
+					{
+						resize(input_viewer->GetMat(), output_viewer->GetMat(), Size(arg_dsize_value[0], arg_dsize_value[1]),
+							arg_fxy_value[0], arg_fxy_value[1], ifs.ParseIndex2Enum(arg_interpolation_index));
+
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
+
+						AddLogger(LogType::Info, "resize() succeeded: %s\n", output_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "resize() error: %s", output_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(output_viewer);
+					}
+					input_viewer = NULL;
+					output_viewer = NULL;
+					if(arg_output_index == items_count) arg_output_index = -1;
+				}
+
+				ImGui::TreePop();
+			}
+			AddMarker(u8"图像缩放/插值");
 
 			//inRange()
 			if (ImGui::TreeNode(u8"inRange(iiio)"))
@@ -572,6 +646,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 
 				ImGui::TreePop();
 			}
+			AddMarker(u8"检查数组元素是否位于另外两个数组的元素之间");
 
 			//normalize()
 			if (ImGui::TreeNode(u8"normalize(im_ffddi)"))
@@ -642,12 +717,109 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 
 				ImGui::TreePop();
 			}
+			AddMarker(u8"数据归一化");
+
+			//applyColorMap()
+			if (ImGui::TreeNode(u8"applyColorMap(iod)"))
+			{
+				static EnumParser<ColormapTypes> ct;
+				//input
+				static int arg_input_index = -1;
+				AddViewerCombo("input", &arg_input_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//colormap
+				static int arg_colormap_index = -1;
+				AddLeftLabel("colormap", u8"应用 OpenCV 自带的颜色表");
+				ImGui::Combo("##colormap", &arg_colormap_index, ct.ParseMap2Items(), ct.GetMapCount());
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("applyColorMap()"));
+
+					try
+					{
+						applyColorMap(input_viewer->GetMat(), output_viewer->GetMat(), ct.ParseIndex2Enum(arg_colormap_index));
+
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
+
+						AddLogger(LogType::Info, "applyColorMap() succeeded: %s\n", output_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						MatViewerManager::Instance().RemoveViewer(output_viewer);
+						AddLogger(e, "applyColorMap() error: %s\n", output_viewer->GetTitle());
+					}
+					input_viewer = NULL;
+					output_viewer = NULL;
+					if (arg_output_index == items_count) arg_output_index = -1;
+				}
+				ImGui::TreePop();
+			}
+			AddMarker(u8"Look Up Table(LUT)查找表");
+
+			//applyColorMap(ioi)
+			if (ImGui::TreeNode(u8"applyColorMap(ioi)"))
+			{
+				/*
+				//input
+				static int arg_input_index = -1;
+				AddViewerCombo("input", &arg_input_index, true);
+
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//userColor
+				static int arg_userColor_index = -1;
+				AddViewerCombo("userColor", &arg_userColor_index, true);
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) &&
+					(arg_input_index != -1 && arg_userColor_index != -1))
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("applyColorMap(ioi)"));
+
+					InputArray userColor = arg_userColor_index == -1 || arg_userColor_index == items_count ? noArray() : MatViewerManager::Instance().GetViewer(arg_userColor_index)->GetMat();
+					arg_output_index = arg_output_index == items_count ? -1 : arg_output_index;
+
+					try
+					{
+						applyColorMap(input_viewer->GetMat(), output_viewer->GetMat(), userColor);
+
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
+
+						AddLogger(LogType::Info, "applyColorMap(ioi) succeeded: %s\n",  output_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "applyColorMap(ioi) error. remove viewer:", output_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(output_viewer);
+					}
+
+					input_viewer = NULL;
+					output_viewer = NULL;
+				}
+				*/
+				ImGui::TreePop();
+			}
+			AddMarker(u8"Look Up Table(LUT)查找表");
 
 			//rotate()
 		}
 
-		//图像运算操作 API
-		if (ImGui::CollapsingHeader(u8"图像运算操作"))
+		//图像数据运算操作 API
+		if (ImGui::CollapsingHeader(u8"图像数据运算操作"))
 		{
 			//[iio_id] add() subtract()
 			{
@@ -788,6 +960,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 						}
 						ImGui::TreePop();
 					}
+					AddMarker(func_name[i]);
 				}
 			}
 
@@ -854,6 +1027,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 						}
 						ImGui::TreePop();
 					}
+					AddMarker(func_name[i]);
 				}
 			}
 
@@ -914,31 +1088,33 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 						}
 						ImGui::TreePop();
 					}
+					AddMarker(func_name[i]);
 				}
 			}
 		}
 
 		//几何形状绘制 API
 		if (ImGui::CollapsingHeader(u8"绘制几何形状"))
-		{
-			static EnumParser<LineTypes> lt;
+		{			
+			static EnumParser<LineTypes> lt;	//LineTypes Enum			
+			static EnumParser<MarkerTypes> mt;	//MarkerTypes Enum
 
 			//line()
-
-			//arrowedLine()
-
-			//rectangle()
-			if (ImGui::TreeNode(u8"rectangle(mrs_ddd)"))
+			if (ImGui::TreeNode(u8"line(mpps_ddd)"))
 			{
-				//input
+				//input/output
 				static int arg_input_index = -1;
-				AddViewerCombo("input", &arg_input_index, true);
+				AddViewerCombo("input/output", &arg_input_index, true);
 
-				//rect
-				static int arg_rect_value[4] = {};
-				AddLeftLabel("rect", u8"矩形区域");
-				//ImGui::SliderInt4("##rect", arg_rect_value, 0.0, 1920.0, "%d");
-				ImGui::DragInt4("##rect", arg_rect_value, 1.0f, 0.0, 1920.0, "%d");
+				//pt2
+				static int arg_pt1_value[2] = {};
+				AddLeftLabel("point1", u8"第一个点");
+				ImGui::DragInt2("##pt1", arg_pt1_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//pt2
+				static int arg_pt2_value[2] = {};
+				AddLeftLabel("point2", u8"第二个点");
+				ImGui::DragInt2("##pt2", arg_pt2_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
 
 				//color
 				static ImVec4 color;
@@ -948,7 +1124,7 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				//thickness
 				static int arg_thickness_value = 1;
 				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
-				ImGui::SliderInt("##thickness", &arg_thickness_value, -1, 10, "%d");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
 
 				//lineType
 				static int arg_lineType_index = 2;
@@ -958,7 +1134,138 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 				//shift
 				static int arg_shift_value = 0;
 				AddLeftLabel("shift", u8"点坐标中的小数位数");
-				ImGui::SliderInt("##shift", &arg_shift_value, 0, 6, "%d");
+				ImGui::SliderInt("##shift", &arg_shift_value, ARG_SHIFT_MIN_VALUE, ARG_SHIFT_MAX_VALUE, "%d");
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+
+						line(input_viewer->GetMat(), Point(arg_pt1_value[0], arg_pt1_value[1]), Point(arg_pt2_value[0], arg_pt2_value[1]),
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255), arg_thickness_value,
+							lt.ParseIndex2Enum(arg_lineType_index), arg_shift_value);
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "line() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "line() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制线段符号");
+
+			//arrowedLine()
+			if (ImGui::TreeNode(u8"arrowedLine(mpps_dddf)"))
+			{
+				//input/output
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//pt2
+				static int arg_pt1_value[2] = {};
+				AddLeftLabel("point1", u8"第一个点");
+				ImGui::DragInt2("##pt1", arg_pt1_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//pt2
+				static int arg_pt2_value[2] = {};
+				AddLeftLabel("point2", u8"第二个点");
+				ImGui::DragInt2("##pt2", arg_pt2_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"线条颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//shift
+				static int arg_shift_value = 0;
+				AddLeftLabel("shift", u8"点坐标中的小数位数");
+				ImGui::SliderInt("##shift", &arg_shift_value, ARG_SHIFT_MIN_VALUE, ARG_SHIFT_MAX_VALUE, "%d");
+
+				//tipLength
+				static float arg_tipLength_value = 0.1;
+				AddLeftLabel("tipLength", u8"箭头尖端相对于箭头长度的长度");
+				ImGui::SliderFloat("##tipLength", &arg_tipLength_value, ARG_TIPLEN_MIN_VALUE, ARG_TIPLEN_MAX_VALUE, "%.1f");
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+
+						arrowedLine(input_viewer->GetMat(), Point(arg_pt1_value[0], arg_pt1_value[1]), Point(arg_pt2_value[0], arg_pt2_value[1]),
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255), arg_thickness_value,
+							lt.ParseIndex2Enum(arg_lineType_index), arg_shift_value, arg_tipLength_value);
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "arrowedLine() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "arrowedLine() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制方向箭头符号");
+
+			//rectangle()
+			if (ImGui::TreeNode(u8"rectangle(mrs_ddd)"))
+			{
+				//input
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//rect
+				static int arg_rect_value[4] = {};
+				AddLeftLabel("rect", u8"矩形区域");
+				ImGui::DragInt4("##rect", arg_rect_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"线条颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//shift
+				static int arg_shift_value = 0;
+				AddLeftLabel("shift", u8"点坐标中的小数位数");
+				ImGui::SliderInt("##shift", &arg_shift_value, ARG_SHIFT_MIN_VALUE, ARG_SHIFT_MAX_VALUE, "%d");
 
 				//执行 rectangle()
 				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
@@ -988,19 +1295,337 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 
 				ImGui::TreePop();
 			}
+			AddMarker(u8"绘制矩形符号");
 
 			//circle()
+			if (ImGui::TreeNode(u8"circle(mpds_ddd)"))
+			{
+				//input/output
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//center
+				static int arg_center_value[2] = {};
+				AddLeftLabel("center", u8"中心点坐标");
+				ImGui::DragInt2("##center", arg_center_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//radius
+				static int arg_radius_value = 5;
+				AddLeftLabel("radius", u8"圆半径");
+				ImGui::SliderInt("##radius", &arg_radius_value, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE * 0.5, "%d");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"线条颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//shift
+				static int arg_shift_value = 0;
+				AddLeftLabel("shift", u8"中心坐标和半径值中的小数位数");
+				ImGui::SliderInt("##shift", &arg_shift_value, ARG_SHIFT_MIN_VALUE, ARG_SHIFT_MAX_VALUE, "%d");
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+						circle(input_viewer->GetMat(), Point(arg_center_value[0], arg_center_value[1]), arg_radius_value,
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255), arg_thickness_value,
+							lt.ParseIndex2Enum(arg_lineType_index), arg_shift_value);
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "circle() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "circle() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制圆形符号");
 
 			//ellipse()
+			if (ImGui::TreeNode(u8"ellipse(mpsfffs_ddd)"))
+			{
+				//input/output
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//center
+				static int arg_center_value[2] = {};
+				AddLeftLabel("center", u8"中心点坐标");
+				ImGui::DragInt2("##center", arg_center_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//axes
+				static int arg_axes_value[2] = {};
+				AddLeftLabel("axes", u8"Size width height");
+				ImGui::SliderInt2("##axes", arg_axes_value, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE * 0.5, "%d");
+
+				//angle, startAngle, endAngle
+				static float arg_angle_value[3] = {};
+				AddLeftLabel("angle", u8"angle, startAngle, endAngle");
+				ImGui::SliderFloat3("##angle", arg_angle_value, -180.0, 180.0, "%.1f");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"线条颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//shift
+				static int arg_shift_value = 0;
+				AddLeftLabel("shift", u8"中心坐标和轴值的小数位数");
+				ImGui::SliderInt("##shift", &arg_shift_value, ARG_SHIFT_MIN_VALUE, ARG_SHIFT_MAX_VALUE, "%d");
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+						ellipse(input_viewer->GetMat(), Point(arg_center_value[0], arg_center_value[1]), Size(arg_axes_value[0], arg_axes_value[1]),
+							arg_angle_value[0], arg_angle_value[1], arg_angle_value[2],
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255), 
+							arg_thickness_value, lt.ParseIndex2Enum(arg_lineType_index), arg_shift_value);
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "ellipse() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "ellipse() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制弧形或椭圆符号");
 
 			//drawMarker()
+			if (ImGui::TreeNode(u8"drawMarker(mps_dddd)"))
+			{
+				//input/output
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//position
+				static int arg_position_value[2] = {};
+				AddLeftLabel("position", u8"位置坐标");
+				ImGui::DragInt2("##position", arg_position_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"线条颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//markerType
+				static int arg_markerType_index = 0;
+				AddLeftLabel("markerType", u8"标记类型");
+				ImGui::Combo("##markerType", &arg_markerType_index, mt.ParseMap2Items(), mt.GetMapCount());
+
+				//markerSize
+				static int arg_markerSize_value = 20;
+				AddLeftLabel("markerSize", u8"标记大小");
+				ImGui::SliderInt("##markerSize", &arg_markerSize_value, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE * 0.5, "%d");
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条组细，FILLED类型表示该函数必须绘制一个填充矩形");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, ARG_THICK_MIN_VALUE, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+						drawMarker(input_viewer->GetMat(), Point(arg_position_value[0], arg_position_value[1]),
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255), mt.ParseIndex2Enum(arg_markerType_index),
+							arg_markerSize_value, arg_thickness_value, lt.ParseIndex2Enum(arg_lineType_index));
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "drawMarker() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "drawMarker() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制标记符号");
+
+			//putText()
+			if (ImGui::TreeNode(u8"putText(mtpdfs_ddb)"))
+			{
+				static EnumParser<HersheyFonts> hf;		//HersheyFonts Enum
+
+				//input/output
+				static int arg_input_index = -1;
+				AddViewerCombo("input/output", &arg_input_index, true);
+
+				//text
+				static char arg_text_value[64] = "";
+				AddLeftLabel("text", u8"要绘制的文本字符串");
+				ImGui::InputText("##text", arg_text_value, IM_ARRAYSIZE(arg_text_value));
+
+				//org
+				static int arg_org_value[2] = {};
+				AddLeftLabel("org", u8"图像中文本字符串的左下角");
+				ImGui::DragInt2("##org", arg_org_value, 1.0f, ARG_PT_MIN_VALUE, ARG_PT_MAX_VALUE, "%d");
+
+				//fontFace
+				static int arg_fontFace_index = 0;
+				AddLeftLabel("fontFace", u8"字体类型");
+				ImGui::Combo("##fontFace", &arg_fontFace_index, hf.ParseMap2Items(), hf.GetMapCount());
+
+				//fontScale
+				static float arg_fontScale_value = 1.0;
+				AddLeftLabel("fontScale", u8"字体比例因子乘以特定于字体的基本大小");
+				ImGui::SliderFloat("##fontScale", &arg_fontScale_value, 0.5, 10.0, "%.1f");
+
+				//color
+				static ImVec4 color;
+				AddLeftLabel("color", u8"字体颜色");
+				ImGui::ColorEdit4("##color", (float*)&color);
+
+				//thickness
+				static int arg_thickness_value = 1;
+				AddLeftLabel("thickness", u8"线条粗细");
+				ImGui::SliderInt("##thickness", &arg_thickness_value, 1, ARG_THICK_MAX_VALUE, "%d");
+
+				//lineType
+				static int arg_lineType_index = 2;
+				AddLeftLabel("lineType", u8"线条类型");
+				ImGui::Combo("##lineType", &arg_lineType_index, lt.ParseMap2Items(), lt.GetMapCount());
+
+				//bottomLeftOrigin
+				static bool arg_bottomLeftOrigin_value = false;
+				AddLeftLabel("BLOrigin", u8"如果为true，则图像数据原点位于左下角。否则，它位于左上角。");
+				ImGui::Checkbox("bottomLeftOrigin", &arg_bottomLeftOrigin_value);
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+
+					try
+					{
+						putText(input_viewer->GetMat(), arg_text_value, Point(arg_org_value[0], arg_org_value[1]),
+							hf.ParseIndex2Enum(arg_fontFace_index), arg_fontScale_value, 
+							Scalar(color.z * 255, color.y * 255, color.x * 255, color.w * 255),
+							arg_thickness_value, lt.ParseIndex2Enum(arg_lineType_index), arg_bottomLeftOrigin_value);
+
+						input_viewer->UpdateMat();
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "putText() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "putText() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+				}
+
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制文本符号");
 		}
 
 		//图像直方图分析
 		if (ImGui::CollapsingHeader(u8"图像直方图分析"))
 		{
-			ImGui::Text(u8"待添加 ...");
+			//calcHist
+			if (ImGui::TreeNode(u8"calcHist() (drawCalcHist)"))
+			{
+				//input
+				static int arg_input_index = -1;
+				AddViewerCombo("input", &arg_input_index, true);
 
+				//output
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false);
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("drawHist()"));
+					Mat result;
+					try
+					{
+						result = drawCalcHist(input_viewer->GetMat());
+						output_viewer->LoadMat(result);
+						input_viewer->is_open = true;
+
+						AddLogger(LogType::Info, "calcHist() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "calcHist() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					result.release();
+					input_viewer = NULL;
+					output_viewer = NULL;
+					if (arg_output_index == items_count) arg_output_index = -1;
+				}
+
+				ImGui::TreePop();
+			}
+			AddMarker(u8"绘制直方图曲线");
+
+			//equalizeHist()
+			if (ImGui::TreeNode(u8"equalizeHist()"))
+			{
+				static int arg_input_index = -1;
+				AddViewerCombo("input", &arg_input_index, true, "8位单通道输入数据组");
+
+				ImGui::TreePop();
+			}
+			//equalizeHist
 		}
 
 		//二值图像分析
