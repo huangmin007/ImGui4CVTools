@@ -1,22 +1,22 @@
 ﻿  CVViewer.cpp
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(387): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(437): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(554): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(670): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(731): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1126): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1192): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1200): warning C4305: “初始化”: 从“double”到“float”截断
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1257): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1309): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1324): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1373): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1393): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1448): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1453): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1463): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1514): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1534): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(386): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(436): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(553): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(669): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(730): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1125): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1191): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1199): warning C4305: “初始化”: 从“double”到“float”截断
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1256): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1308): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1323): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1372): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1392): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1447): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1452): warning C4244: “参数”: 从“double”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1462): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1513): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(1533): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
   正在生成代码...
   正在编译...
   MatViewerManager.cpp
@@ -26,8 +26,9 @@ e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(61): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(74): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(97): warning C4312: “类型转换”: 从“GLuint”转换到更大的“GLuint *”
+  正在生成代码...
+  正在跳过...(未检测到相关更改)
   ImGui4CVTools.cpp
   CVAPIGuide.cpp
-  正在生成代码...
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.exe
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.pdb (Full PDB)

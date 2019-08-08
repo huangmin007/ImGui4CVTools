@@ -258,7 +258,7 @@ static void AddTableRow(const char *label1, const char *label2, const char *labe
 static void ShowCVAPIHelpWindow(bool *p_open)
 {
 	ImGui::SetNextWindowPos(ImVec2(500, 300), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(400, 350), ImGuiCond_FirstUseEver);
 	
 	ImGui::Begin("OpenCV(v410) API Help", p_open);
 
@@ -276,13 +276,13 @@ static void ShowCVAPIHelpWindow(bool *p_open)
 	AddTableRow("t", "Text", u8"");
 	AddTableRow("b", "Boolean", u8"");
 
-	ImGui::Text(u8"注意：OpenCV API 浮点类型使用的都是 double 类型，\n\tImGui 浮点类型使用的都是 float 类型，会有一点的精度损失。");
+	ImGui::Text(u8"注意：OpenCV API 浮点类型使用的都是 double 类型，\n\t\tImGui 浮点类型使用的都是 float 类型，会有一点的精度损失。");
 
 	ImGui::End();
 }
 
 //添加 Viewer List Guide Combo 
-static void AddViewerCombo(const char *label, int *out_index, bool input = true, const char *des = NULL)
+static void AddViewerCombo(const char *label, int *out_index, bool input = true, const char *des = NULL, ...)
 {
 	const int items_count = MatViewerManager::Instance().GetCount();
 	const char **items = MatViewerManager::Instance().GetAllTitle();
@@ -291,28 +291,21 @@ static void AddViewerCombo(const char *label, int *out_index, bool input = true,
 	ImGui::Text(label);
 	ImGui::SameLine(COL_LEFT_WIDTH);
 
+	static char c_des[255] = {};
 	static char c_label[255] = {};
 	sprintf_s(c_label, "%s%s", "##", label);
-	
-	char c_des[255] = {};
 
 	if (input)
 	{
-		if (des != NULL)
-			sprintf_s(c_des, u8"选择输入视图窗口的 InputArray 对象\n%s", des);
-		else
-			sprintf_s(c_des, u8"选择输入视图窗口的 InputArray 对象");
+		sprintf_s(c_des, "%s\n%s", u8"选择输入视图窗口的 InputArray 对象", des != NULL ? des : "");
 
-		AddHelpMarker(u8"选择输入视图窗口的 InputArray 对象");
+		AddHelpMarker(c_des);
 		ImGui::SameLine();
 		ImGui::Combo(c_label, out_index, items, items_count);
 	}
 	else
 	{
-		if (des != NULL)
-			sprintf_s(c_des, u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空\n%s", des);
-		else
-			sprintf_s(c_des, u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空");
+		sprintf_s(c_des, "%s\n%s", u8"选择出视图窗口的 InputArray 对象\n选择 [Create New Viewer] 或不选择，表示创建新的 InputArray 对象 或是默认参数 或是参数为空", des != NULL ? des : "");
 
 		AddHelpMarker(c_des);
 		ImGui::SameLine();
@@ -1598,7 +1591,8 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 					{
 						result = drawCalcHist(input_viewer->GetMat());
 						output_viewer->LoadMat(result);
-						input_viewer->is_open = true;
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
 
 						AddLogger(LogType::Info, "calcHist() succeeded: %s\n", input_viewer->GetTitle());
 					}
@@ -1617,15 +1611,48 @@ static void ShowCVAPIWindow(GLFWwindow *window)
 			}
 			AddMarker(u8"绘制直方图曲线");
 
-			//equalizeHist()
-			if (ImGui::TreeNode(u8"equalizeHist()"))
+			//equalizeHist(io)
+			if (ImGui::TreeNode(u8"equalizeHist(io)"))
 			{
 				static int arg_input_index = -1;
-				AddViewerCombo("input", &arg_input_index, true, "8位单通道输入数据组");
+				AddViewerCombo("input", &arg_input_index, true, u8"8位单通道输入数据组");
+
+				static int arg_output_index = -1;
+				AddViewerCombo("output", &arg_output_index, false, u8"与 input 具有相同大小和类型的目标图像");
+
+				//执行
+				if (ImGui::Button("exce", ImVec2(ImGui::GetContentRegionAvail().x, BTN_HEIGHT)) && arg_input_index != -1)
+				{
+					MatViewer *input_viewer = MatViewerManager::Instance().GetViewer(arg_input_index);
+					MatViewer *output_viewer = MatViewerManager::Instance().GetViewer(arg_output_index, input_viewer->GetNextTitle("equalizeHist()"));
+					
+					try
+					{
+						equalizeHist(input_viewer->GetMat(), output_viewer->GetMat());
+						output_viewer->UpdateMat();
+						output_viewer->is_open = true;
+						output_viewer->SetViewerPos(input_viewer->GetNextViewerPos());
+
+						AddLogger(LogType::Info, "equalizeHist() succeeded: %s\n", input_viewer->GetTitle());
+					}
+					catch (Exception e)
+					{
+						AddLogger(e, "equalizeHist() error: %s", input_viewer->GetTitle());
+						MatViewerManager::Instance().RemoveViewer(input_viewer);
+					}
+					input_viewer = NULL;
+					output_viewer = NULL;
+					if (arg_output_index == items_count) arg_output_index = -1;
+				}
 
 				ImGui::TreePop();
 			}
-			//equalizeHist
+			AddMarker(u8"图像直方图均衡化");
+
+			//图像直方图比较
+
+			//calcBackProject()
+			//calcBackProject
 		}
 
 		//二值图像分析

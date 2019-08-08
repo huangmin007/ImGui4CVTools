@@ -49,6 +49,9 @@ public:
 	//是否渲染输出显示图片
 	bool is_render = true;
 
+	double GetArgs(const char *argName);
+
+	void SetArgs(const char *name, double value);
 
 private:
 	char n_title[MAX_CHAR];
@@ -60,5 +63,8 @@ private:
 	GLuint texture_id = -1;
 	
 	ImVec2 pos = ImVec2(30, 30);
+
+	//其它参数
+	map <const char*, double> n_args;
 };
 
