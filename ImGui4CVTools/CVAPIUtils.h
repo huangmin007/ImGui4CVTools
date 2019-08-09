@@ -190,7 +190,19 @@ EnumParser<ColormapTypes>::EnumParser()
 	enum_map["COLORMAP_CIVIDIS"] = ColormapTypes::COLORMAP_CIVIDIS;
 	enum_map["COLORMAP_TWILIGHT"] = ColormapTypes::COLORMAP_TWILIGHT;
 	enum_map["COLORMAP_TWILIGHT_SHIFTED"] = ColormapTypes::COLORMAP_TWILIGHT_SHIFTED;
+}
 
+EnumParser<BorderTypes>::EnumParser()
+{
+	enum_map["BORDER_CONSTANT"] = BorderTypes::BORDER_CONSTANT;
+	enum_map["BORDER_REPLICATE"] = BorderTypes::BORDER_REPLICATE;
+	enum_map["BORDER_REFLECT"] = BorderTypes::BORDER_REFLECT;
+	enum_map["BORDER_WRAP"] = BorderTypes::BORDER_WRAP;
+	enum_map["BORDER_REFLECT_101"] = BorderTypes::BORDER_REFLECT_101;
+	enum_map["BORDER_TRANSPARENT"] = BorderTypes::BORDER_TRANSPARENT;
+	enum_map["BORDER_REFLECT101"] = BorderTypes::BORDER_REFLECT101;
+	enum_map["BORDER_DEFAULT"] = BorderTypes::BORDER_DEFAULT;
+	enum_map["BORDER_ISOLATED"] = BorderTypes::BORDER_ISOLATED;
 }
 
 //Ñ¡ÔñÍ¼Æ¬ÎÄ¼þ

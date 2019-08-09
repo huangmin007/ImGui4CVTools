@@ -15,6 +15,7 @@ public:
 	void Render();
 
 private:
+	void ShowMainMenuBar();
 
 	GLFWwindow *window;
 

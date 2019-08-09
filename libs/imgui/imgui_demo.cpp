@@ -3559,6 +3559,7 @@ struct ExampleAppConsole
 
             // Normally you would store more information in your item (e.g. make Items[] an array of structure, store color/type etc.)
             bool pop_color = false;
+			printf("imgui_demo::%s\n", item);
             if (strstr(item, "[error]"))            { ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f)); pop_color = true; }
             else if (strncmp(item, "# ", 2) == 0)   { ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.6f, 1.0f)); pop_color = true; }
             ImGui::TextUnformatted(item);
