@@ -1,4 +1,9 @@
-﻿  CVViewer.cpp
+﻿  MatViewer.cpp
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(45): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(61): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(74): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(97): warning C4312: “类型转换”: 从“GLuint”转换到更大的“GLuint *”
+  CVViewer.cpp
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(357): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(407): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(575): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
@@ -27,14 +32,6 @@ e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(2162): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(2175): warning C4305: “初始化”: 从“double”到“float”截断
 e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\cvviewer.cpp(2187): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  正在生成代码...
-  正在编译...
-  MatViewer.cpp
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(45): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(61): warning C4244: “参数”: 从“int”转换到“float”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(74): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
-e:\2018\2019_opencv\c++\opencv410_projects\imgui4cvtools\imgui4cvtools\matviewer.cpp(97): warning C4312: “类型转换”: 从“GLuint”转换到更大的“GLuint *”
-  CVAPIGuide.cpp
   正在生成代码...
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.exe
   ImGui4CVTools.vcxproj -> E:\2018\2019_OpenCV\C++\OpenCV410_Projects\ImGui4CVTools\x64\Debug\ImGui4CVTools.pdb (Full PDB)
